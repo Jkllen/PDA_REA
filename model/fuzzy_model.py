@@ -151,7 +151,6 @@ def get_risk_distribution(score: float) -> dict:
 def predict_crash_type(risk_level: str, inputs: dict) -> str:
     brake = str(inputs["brake_condition"]).lower()
     road = str(inputs["road_condition"]).lower()
-    vehicle_type = str(inputs["vehicle_type"]).lower()
     alcohol = float(inputs["driver_alcohol"])
     speed_limit = int(inputs["speed_limit"])
     vehicle_age_value = int(inputs["vehicle_age"])
@@ -213,6 +212,47 @@ def predict_maintenance_required(risk_level: str, inputs: dict) -> str:
         return "No"
 
     return "No"
+
+def predict_casualties(risk_level: str, inputs: dict) -> str:
+    traffic_density = int(inputs["traffic_density"])
+    vehicle_type = str(inputs["vehicle_type"]).lower()
+    speed_limit = int(inputs["speed_limit"])
+    road_type = str(inputs["road_type"]).lower()
+    weather = str(inputs["weather"]).lower()
+    intersection = str(inputs["intersection"]).lower()
+
+    # R27: High severity + high traffic + medium-risk vehicle -> Many
+    if risk_level == "High Risk" and traffic_density == 2 and vehicle_type in {"bus", "truck"}:
+        return "Many"
+
+    # R28: High severity + high-risk vehicle + high speed -> Few
+    if risk_level == "High Risk" and vehicle_type == "motorcycle" and speed_limit >= 130:
+        return "Few"
+
+    # R29: Medium severity + medium traffic + at intersection -> Moderate
+    if risk_level == "Medium Risk" and traffic_density == 1 and intersection == "at intersection":
+        return "Moderate"
+
+    # R30: Low severity + low traffic -> Few
+    if risk_level == "Low Risk" and traffic_density == 0:
+        return "Few"
+
+    # R31: High severity + high-risk road + bad weather + high traffic -> Many
+    if (
+        risk_level == "High Risk"
+        and road_type == "mountain road"
+        and weather == "rain"
+        and traffic_density == 2
+    ):
+        return "Many"
+
+    # sensible fallbacks
+    if risk_level == "High Risk":
+        return "Moderate"
+    if risk_level == "Medium Risk":
+        return "Moderate"
+    return "Few"
+
 
 def generate_recommendations(risk_level: str, reasons: list[str]) -> list[str]:
     recommendations = []
@@ -280,6 +320,7 @@ def evaluate_fuzzy(inputs: dict):
     risk_distribution = get_risk_distribution(score)
     predicted_crash_type = predict_crash_type(risk_level, inputs)
     predicted_maintenance = predict_maintenance_required(risk_level, inputs)
+    predicted_casualties = predict_casualties(risk_level, inputs)
     
     reasons = []
 
@@ -332,4 +373,4 @@ def evaluate_fuzzy(inputs: dict):
         reasons.append("Input conditions stayed within safer ranges.")
     recommendations = generate_recommendations(risk_level, reasons)
 
-    return score, risk_level, risk_distribution, predicted_crash_type, predicted_maintenance, reasons, recommendations
+    return score, risk_level, risk_distribution, predicted_casualties, predicted_crash_type, predicted_maintenance, reasons, recommendations

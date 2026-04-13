@@ -4,6 +4,7 @@ def generate_report(
     score,
     risk_level,
     risk_distribution,
+    predicted_casualties,
     predicted_crash_type,
     predicted_maintenance,
     reasons,
@@ -40,6 +41,7 @@ Speed Limit: {inputs['speed_limit']}
 --- RESULT ---
 Accident Risk Level: {risk_level}
 Severity Score: {score:.2f}
+Predicted Number of Casualties: {predicted_casualties}
 Predicted Crash Type: {predicted_crash_type}
 Predicted Maintenance Required: {predicted_maintenance}
 
