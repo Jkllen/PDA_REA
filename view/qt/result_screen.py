@@ -46,10 +46,10 @@ class ResultScreen(QWidget):
         self.title = QLabel("Evaluation Result")
         layout.addWidget(self.title)
 
-        self.risk_label = QLabel("Risk Level: -")
+        self.risk_label = QLabel("Accident Risk Level: -")
         layout.addWidget(self.risk_label)
 
-        self.score_label = QLabel("Risk Score: -")
+        self.score_label = QLabel("Severity Score: -")
         layout.addWidget(self.score_label)
 
         self.report_box = QTextEdit()
@@ -102,14 +102,14 @@ class ResultScreen(QWidget):
         layout.addLayout(button_row)
 
     def set_result(self, report: str, risk_level: str, score: float):
-        self.risk_label.setText(f"Risk Level: {risk_level}")
-        self.score_label.setText(f"Risk Score: {score:.2f}")
+        self.risk_label.setText(f"Accident Risk Level: {risk_level}")
+        self.score_label.setText(f"Severity Score: {score:.2f}")
         self.report_box.setPlainText(report)
 
     def set_decrypted_report(self, report: str):
         self.report_box.setPlainText(report)
 
     def clear_result(self):
-        self.risk_label.setText("Risk Level: -")
-        self.score_label.setText("Risk Score: -")
+        self.risk_label.setText("Accident Risk Level: -")
+        self.score_label.setText("Severity Score: -")
         self.report_box.clear()

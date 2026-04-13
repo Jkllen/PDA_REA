@@ -115,12 +115,6 @@ class RiskInputScreen(QWidget):
             "Failure History",
             ["no", "yes", "unknown"]
         )
-        self.maintenance_required = self._combo_row(
-            right_col,
-            "🛠️",
-            "Maintenance Required",
-            ["no", "yes"]
-        )
         self.brake_condition = self._combo_row(
             right_col,
             "🔩",
@@ -137,14 +131,14 @@ class RiskInputScreen(QWidget):
             right_col,
             "🕳️",
             "Road Defect",
-            ["no defect", "worn surface", "rust/holes"]
+            ["no defects", "worn surface", "ruts/holes"]
         )
         self.intersection_related = self._combo_row(
-            right_col,
-            "➕"
-            "Intersection",
-            ["no intersection", "at intersection"]
-        )
+        right_col,
+        "➕",
+        "Intersection",
+        ["no intersection", "at intersection"]
+    )
         self.speed_limit = self._spin_row(
             right_col,
             "🚦",
@@ -303,11 +297,6 @@ class RiskInputScreen(QWidget):
             "unknown": 0.5,
         }
 
-        maintenance_map = {
-            "no": 0.0,
-            "yes": 1.0,
-        }
-
         inputs = {
             "driver_age": int(self.driver_age.value()),
             "driver_experience": int(self.driver_experience.value()),
@@ -315,7 +304,6 @@ class RiskInputScreen(QWidget):
             "traffic_density": int(self.traffic_density.currentText()),
             "vehicle_age": int(self.vehicle_age.value()),
             "failure_history": failure_map[self.failure_history.currentText()],
-            "maintenance_required": maintenance_map[self.maintenance_required.currentText()],
             "brake_condition": self.brake_condition.currentText(),
             "weather": self.weather.currentText(),
             "lighting": self.lighting.currentText(),
@@ -342,5 +330,4 @@ class RiskInputScreen(QWidget):
         self.time_of_day.setCurrentIndex(0)
         self.vehicle_age.setValue(5)
         self.failure_history.setCurrentIndex(0)
-        self.maintenance_required.setCurrentIndex(0)
         self.brake_condition.setCurrentIndex(0)

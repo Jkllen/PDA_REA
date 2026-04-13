@@ -80,13 +80,16 @@ class AppController:
             return
 
         try:
-            score, risk_level, triggered_reasons, recommendations = evaluate_fuzzy(user_inputs)
+            score, risk_level, risk_distribution, predicted_crash_type, predicted_maintenance, triggered_reasons, recommendations = evaluate_fuzzy(user_inputs)
 
             report = generate_report(
                 client=self.current_client,
                 inputs=user_inputs,
                 score=score,
                 risk_level=risk_level,
+                risk_distribution=risk_distribution,
+                predicted_crash_type=predicted_crash_type,
+                predicted_maintenance=predicted_maintenance,
                 reasons=triggered_reasons,
                 recommendations=recommendations,
             )
