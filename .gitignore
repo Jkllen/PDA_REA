@@ -1,2 +1,5 @@
 .venv
 data\fused_dataset.csv
+__pycache__/
+*.pyc
+*.pyo
