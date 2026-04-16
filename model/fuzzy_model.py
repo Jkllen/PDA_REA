@@ -55,8 +55,8 @@ driver_experience["medium"] = fuzz.trapmf(driver_experience.universe, [5, 10, 20
 driver_experience["high"] = fuzz.trapmf(driver_experience.universe, [25, 35, 50, 50])
 
 driver_alcohol["none"] = fuzz.trapmf(driver_alcohol.universe, [0.0, 0.0, 0.05, 0.1])
-driver_alcohol["low"] = fuzz.trimf(driver_alcohol.universe, [0.05, 0.25, 0.5])
-driver_alcohol["high"] = fuzz.trapmf(driver_alcohol.universe, [0.4, 0.6, 1.0, 1.0])
+driver_alcohol["low"]  = fuzz.trimf(driver_alcohol.universe, [0.05, 0.2, 0.4])
+driver_alcohol["high"] = fuzz.trapmf(driver_alcohol.universe, [0.3, 0.5, 1.0, 1.0])
 
 traffic_density["low"] = fuzz.trimf(traffic_density.universe, [0, 0, 1])
 traffic_density["medium"] = fuzz.trimf(traffic_density.universe, [0, 1, 2])
@@ -88,38 +88,49 @@ add_low_medium_high(road_defect_risk)
 add_low_medium_high(intersection_risk)
 
 risk["low"] = fuzz.trapmf(risk.universe, [0.0, 0.0, 0.25, 0.45])
-risk["medium"] = fuzz.trimf(risk.universe, [0.35, 0.55, 0.75])
-risk["high"] = fuzz.trapmf(risk.universe, [0.65, 0.8, 1.0, 1.0])
+risk["medium"] = fuzz.trimf(risk.universe, [0.3, 0.5, 0.7])
+risk["high"] = fuzz.trapmf(risk.universe, [0.6, 0.75, 1.0, 1.0])
 
 rules = [
     ctrl.Rule(weather_risk["high"] & road_risk["medium"] & lighting_risk["medium"] & road_defect_risk["medium"], risk["medium"]),
     ctrl.Rule(weather_risk["high"] & road_risk["high"] & lighting_risk["high"], risk["high"]),
-    ctrl.Rule(weather_risk["low"] & road_risk["low"] & lighting_risk["low"], risk["low"]),
+    ctrl.Rule(weather_risk["low"] & road_risk["low"] & lighting_risk["low"] & driver_alcohol["none"], risk["low"]),
     ctrl.Rule(weather_risk["medium"] & road_risk["high"] & lighting_risk["high"], risk["high"]),
     ctrl.Rule(road_defect_risk["high"] & road_risk["medium"] & weather_risk["high"], risk["high"]),
-    ctrl.Rule(road_defect_risk["low"] & road_risk["low"] & weather_risk["low"] & lighting_risk["low"], risk["low"]),
-
+    ctrl.Rule(road_defect_risk["low"] & road_risk["low"] & weather_risk["low"] & lighting_risk["low"] & driver_alcohol["none"], risk["low"]),
     ctrl.Rule(driver_age["young"] & vehicle_type_risk["high"] & time_risk["high"] & driver_experience["low"], risk["high"]),
     ctrl.Rule(driver_age["senior"] & traffic_density["high"] & intersection_risk["high"], risk["medium"]),
-    ctrl.Rule(driver_age["middle"] & vehicle_type_risk["low"] & weather_risk["low"] & road_risk["low"] & driver_experience["high"], risk["low"]),
+    ctrl.Rule(driver_age["middle"] & vehicle_type_risk["low"] & weather_risk["low"] & road_risk["low"] & driver_experience["high"] & driver_alcohol["none"], risk["low"]),
+    
+    ctrl.Rule(driver_alcohol["low"], risk["medium"]),
+    ctrl.Rule(driver_alcohol["high"], risk["high"]),
+    ctrl.Rule(driver_alcohol["high"] & traffic_density["low"], risk["high"]),
+    ctrl.Rule(driver_alcohol["high"] & weather_risk["low"], risk["high"]),
+    ctrl.Rule(driver_alcohol["high"] & lighting_risk["low"], risk["high"]),
+    ctrl.Rule(driver_alcohol["high"] & road_risk["low"], risk["high"]),
     ctrl.Rule(driver_alcohol["high"] & time_risk["high"] & lighting_risk["high"], risk["high"]),
     ctrl.Rule(driver_alcohol["high"] & vehicle_type_risk["high"] & road_risk["high"], risk["high"]),
     ctrl.Rule(driver_alcohol["none"] & driver_experience["high"] & weather_risk["low"] & road_risk["low"], risk["low"]),
+    
     ctrl.Rule(driver_experience["low"] & speed_limit["high"] & road_type_risk["high"], risk["high"]),
     ctrl.Rule(driver_experience["medium"] & driver_alcohol["none"] & traffic_density["medium"] & weather_risk["medium"], risk["medium"]),
 
     ctrl.Rule(time_risk["high"] & lighting_risk["high"] & road_type_risk["high"], risk["high"]),
     ctrl.Rule(time_risk["high"] & traffic_density["high"], risk["medium"]),
     ctrl.Rule(intersection_risk["high"] & traffic_density["high"] & weather_risk["high"], risk["high"]),
-    ctrl.Rule(road_type_risk["low"] & traffic_density["low"] & time_risk["medium"] & intersection_risk["low"], risk["low"]),
+    
+    ctrl.Rule(road_type_risk["low"] & traffic_density["low"] & time_risk["medium"] & intersection_risk["low"] & driver_alcohol["none"], risk["low"]),
+    
     ctrl.Rule(speed_limit["high"] & road_type_risk["high"] & weather_risk["high"], risk["high"]),
-    ctrl.Rule(speed_limit["low"] & traffic_density["low"] & lighting_risk["low"], risk["low"]),
+    ctrl.Rule(speed_limit["low"] & traffic_density["low"] & lighting_risk["low"] & driver_alcohol["none"], risk["low"]),
     ctrl.Rule(speed_limit["medium"] & intersection_risk["high"] & lighting_risk["medium"], risk["medium"]),
+    
+    
     ctrl.Rule(road_defect_risk["high"] & speed_limit["high"] & lighting_risk["high"], risk["high"]),
 
     ctrl.Rule(brake_condition["poor"] & road_risk["high"] & vehicle_type_risk["high"], risk["high"]),
     ctrl.Rule(vehicle_age["old"] & road_type_risk["high"] & weather_risk["high"], risk["high"]),
-    ctrl.Rule(vehicle_age["new"] & brake_condition["good"] & weather_risk["low"], risk["low"]),
+    ctrl.Rule(vehicle_age["new"] & brake_condition["good"] & weather_risk["low"] & driver_alcohol["none"], risk["low"]),
     ctrl.Rule(failure_history["yes"] & brake_condition["poor"] & driver_age["young"] & time_risk["high"], risk["high"]),
 ]
 
@@ -129,7 +140,7 @@ system = ctrl.ControlSystem(rules)
 def classify_risk(score: float) -> str:
     if score < 0.4:
         return "Low Risk"
-    if score < 0.7:
+    if score < 0.65:
         return "Medium Risk"
     return "High Risk"
 
