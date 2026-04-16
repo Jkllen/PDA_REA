@@ -87,9 +87,9 @@ add_low_medium_high(vehicle_type_risk)
 add_low_medium_high(road_defect_risk)
 add_low_medium_high(intersection_risk)
 
-risk["low"] = fuzz.trapmf(risk.universe, [0.0, 0.0, 0.25, 0.45])
-risk["medium"] = fuzz.trimf(risk.universe, [0.3, 0.5, 0.7])
-risk["high"] = fuzz.trapmf(risk.universe, [0.6, 0.75, 1.0, 1.0])
+risk["low"] = fuzz.trapmf(risk.universe, [0.0, 0.0, 0.30, 0.55])
+risk["medium"] = fuzz.trimf(risk.universe, [0.25, 0.50, 0.75])
+risk["high"] = fuzz.trapmf(risk.universe, [0.45, 0.70, 1.0, 1.0])
 
 rules = [
     ctrl.Rule(weather_risk["high"] & road_risk["medium"] & lighting_risk["medium"] & road_defect_risk["medium"], risk["medium"]),
