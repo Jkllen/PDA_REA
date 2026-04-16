@@ -130,18 +130,19 @@ class DecorativeBackground(QWidget):
     def _draw_bottom_section(self, painter: QPainter, rect):
         painter.fillRect(0, rect.height() - 130, rect.width(), 50, QColor(DARK))
         painter.fillRect(0, rect.height() - 80, rect.width(), 80, QColor(DARKER))
+    
+        if self.header_mode != "result":
+            center_x = rect.width() // 2
+            traffic_y = rect.height() - 190
 
-        center_x = rect.width() // 2
-        traffic_y = rect.height() - 190
+            painter.setBrush(QColor(DARKER))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(center_x - 170, traffic_y, 340, 126, 50, 50)
 
-        painter.setBrush(QColor(DARKER))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawRoundedRect(center_x - 170, traffic_y, 340, 126, 50, 50)
-
-        colors = [QColor("#237D2C"), QColor("#8A8115"), QColor("#972414")]
-        for i, color in enumerate(colors):
-            painter.setBrush(color)
-            painter.drawEllipse(center_x - 122 + i * 106, traffic_y + 16, 82, 82)
+            colors = [QColor("#237D2C"), QColor("#8A8115"), QColor("#972414")]
+            for i, color in enumerate(colors):
+                painter.setBrush(color)
+                painter.drawEllipse(center_x - 122 + i * 106, traffic_y + 16, 82, 82)
 
         painter.setBrush(QColor(ORANGE))
         left_poly = [
@@ -279,5 +280,12 @@ class PrimaryButton(QPushButton):
                     stop:1 {BTN_END}
                 );
             }}
-            """
-        )
+            QPushButton:hover {{
+                    background: qlineargradient(
+                        x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #FFD283,
+                        stop:1 #F5C53B
+                    );
+                }}
+                """
+            )

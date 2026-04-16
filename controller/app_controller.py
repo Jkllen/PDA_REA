@@ -21,11 +21,14 @@ class AppController:
 
         self.window.risk_input_screen.back_to_login_requested.connect(self.logout)
         self.window.risk_input_screen.evaluate_requested.connect(self.handle_evaluate)
-
+        
+        
         self.window.result_screen.back_requested.connect(self.show_risk_input)
         self.window.result_screen.encrypt_requested.connect(self.handle_encrypt)
         self.window.result_screen.decrypt_requested.connect(self.handle_decrypt)
-
+        self.window.result_screen.advisory_requested.connect(lambda: self._show_message("Advisory", "Advisory screen not yet implemented."))
+        
+        
     def show(self):
         self.window.show()
 
@@ -96,7 +99,17 @@ class AppController:
             )
 
             self.current_report = report
-            self.window.result_screen.set_result(report, risk_level, score)
+            self.window.result_screen.set_result(
+                report=report,
+                risk_level=risk_level,
+                score=score,
+                client_id=self.current_client,
+                inputs=user_inputs,
+                predicted_casualties=predicted_casualties,
+                predicted_crash_type=predicted_crash_type,
+                predicted_maintenance=predicted_maintenance,
+                reasons=triggered_reasons,
+            )
             self.window.show_result()
 
         except Exception as error:

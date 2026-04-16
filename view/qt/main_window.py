@@ -58,5 +58,5 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.risk_input_screen)
 
     def show_result(self):
-        self.background.set_header_mode("auth")
+        self.background.set_header_mode("result")
         self.stack.setCurrentWidget(self.result_screen)
