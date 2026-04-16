@@ -12,6 +12,12 @@ class AppController:
         self.current_client = None
         self.current_report = None
         self.current_encrypted_file = None
+        self.last_inputs = {}
+        self.last_score = 0.0
+        self.last_risk_level = "-"
+        self.last_predicted_casualties = "-"
+        self.last_predicted_crash_type = "-"
+        self.last_predicted_maintenance = "-"
 
         self.window.login_screen.login_requested.connect(self.handle_login)
         self.window.login_screen.signup_link_clicked.connect(self.show_signup)
@@ -26,7 +32,9 @@ class AppController:
         self.window.result_screen.back_requested.connect(self.show_risk_input)
         self.window.result_screen.encrypt_requested.connect(self.handle_encrypt)
         self.window.result_screen.decrypt_requested.connect(self.handle_decrypt)
-        self.window.result_screen.advisory_requested.connect(lambda: self._show_message("Advisory", "Advisory screen not yet implemented."))
+        self.window.result_screen.advisory_requested.connect(self.show_advisory)
+        self.window.advisory_screen.back_to_result_requested.connect(self.show_result_screen)
+        self.window.advisory_screen.new_evaluation_requested.connect(self.show_risk_input)
         
         
     def show(self):
@@ -99,6 +107,13 @@ class AppController:
             )
 
             self.current_report = report
+            self.last_inputs = user_inputs
+            self.last_score = score
+            self.last_risk_level = risk_level
+            self.last_predicted_casualties = predicted_casualties
+            self.last_predicted_crash_type = predicted_crash_type
+            self.last_predicted_maintenance = predicted_maintenance
+            
             self.window.result_screen.set_result(
                 report=report,
                 risk_level=risk_level,
@@ -166,5 +181,24 @@ class AppController:
         except Exception as error:
             self._show_message("Decryption Error", f"Failed to decrypt report.\n\n{error}")
 
+    def show_advisory(self):
+        if not self.current_client:
+            self._show_message("Session Error", "Please evaluate first.")
+            return
+
+        self.window.advisory_screen.set_advisory(
+            client_id=self.current_client,
+            risk_level=self.last_risk_level,
+            score=self.last_score,
+            predicted_casualties=self.last_predicted_casualties,
+            predicted_crash_type=self.last_predicted_crash_type,
+            predicted_maintenance=self.last_predicted_maintenance,
+            inputs=self.last_inputs,
+        )
+        self.window.show_advisory()
+        
+    def show_result_screen(self):
+        self.window.show_result()
+        
     def _show_message(self, title: str, text: str):
         QMessageBox.information(self.window, title, text)

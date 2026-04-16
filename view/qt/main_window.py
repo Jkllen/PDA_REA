@@ -5,7 +5,7 @@ from view.qt.signup_screen import SignupScreen
 from view.qt.risk_input_screen import RiskInputScreen
 from view.qt.result_screen import ResultScreen
 from view.qt.ui_parts import DecorativeBackground
-
+from view.qt.advisory_screen import AdvisoryScreen
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -33,11 +33,14 @@ class MainWindow(QMainWindow):
         self.signup_screen = SignupScreen(self.background)
         self.risk_input_screen = RiskInputScreen(self.background)
         self.result_screen = ResultScreen(self.background)
-
+        self.advisory_screen = AdvisoryScreen(self.background)
+        
+        
         self.stack.addWidget(self.login_screen)
         self.stack.addWidget(self.signup_screen)
         self.stack.addWidget(self.risk_input_screen)
         self.stack.addWidget(self.result_screen)
+        self.stack.addWidget(self.advisory_screen)
 
         self.show_login()
 
@@ -60,3 +63,7 @@ class MainWindow(QMainWindow):
     def show_result(self):
         self.background.set_header_mode("result")
         self.stack.setCurrentWidget(self.result_screen)
+        
+    def show_advisory(self):
+        self.background.set_header_mode("result")
+        self.stack.setCurrentWidget(self.advisory_screen)
