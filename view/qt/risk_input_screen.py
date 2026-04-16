@@ -68,82 +68,93 @@ class RiskInputScreen(QWidget):
         left_col.setSpacing(20)
         right_col.setSpacing(20)
 
-        self.driver_age = self._spin_row(left_col, "👤", "Driver Age", 18, 70, 30)
-        self.driver_experience = self._spin_row(left_col, "🪪", "Driver Experience", 0, 50, 5)
-        self.driver_alcohol = self._double_row(left_col, "🍺", "Alcohol Level", 0.0, 1.0, 0.0, 1)
+        self.driver_age = self._spin_row(left_col, "👤", "Driver Age", 18, 70, 30, "What is the age of the person driving in Years?")
+        self.driver_experience = self._spin_row(left_col, "🪪", "Driver Experience", 0, 50, 5, "How long has the person been driving in Years?")
+        self.driver_alcohol = self._double_row(left_col, "🍺", "Alcohol Level", 0.0, 1.0, 0.0, 1, "Alcohol level of the person before driving. Meaning of (0-1) values not yet known")
         self.lighting = self._combo_row(
             left_col,
             "💡",
             "Lighting Condition",
-            ["daylight", "dusk", "darkness-light lit", "darkness"]
+            ["daylight", "dusk", "darkness-light lit", "darkness"],
+            "How bright is the road you are driving in?"
         )
         self.road_condition = self._combo_row(
             left_col,
             "🚧",
             "Road Condition",
-            ["dry", "damp", "wet", "flood"]
+            ["dry", "damp", "wet", "flood"],
+            "What is the state of the road you will be driving on"        
         )
         self.road_type = self._combo_row(
             left_col,
             "🛣️",
             "Road Infrastructure",
-            ["city road", "rural road", "highway", "mountain road"]
+            ["city road", "rural road", "highway", "mountain road"],
+            "What type of road will you be driving on?"
         )
-
         self.weather = self._combo_row(
             right_col,
             "☁️",
             "Weather Condition",
-            ["clear", "windy", "fog", "rain"]
+            ["clear", "windy", "fog", "rain"],
+            "What is the current weather before you drive?"
         )
         self.traffic_density = self._combo_row(
             right_col,
             "🚗",
             "Traffic Density",
-            ["0", "1", "2"]
+            ["0", "1", "2"],
+            "How dense is the traffic on your travel?"
         )
         self.time_of_day = self._combo_row(
             right_col,
             "🕒",
             "Time Based Data",
-            ["morning", "afternoon", "evening"]
+            ["morning", "afternoon", "evening"],
+            "What part of the day will you be driving?"
         )
-        self.vehicle_age = self._spin_row(right_col, "🔧", "Vehicle Age", 0, 21, 5)
+        self.vehicle_age = self._spin_row(right_col, "🔧", "Vehicle Age", 0, 21, 5, "How old is the vehicle you are driving in Years")
         self.failure_history = self._combo_row(
             right_col,
             "⚠️",
             "Failure History",
-            ["no", "yes", "unknown"]
+            ["no", "yes", "unknown"],
+            "Has the vehicle you will be driving had any recent or common failures"
         )
         self.brake_condition = self._combo_row(
             right_col,
             "🔩",
             "Brake Condition",
-            ["good", "fair", "poor"]
+            ["good", "fair", "poor"],
+            "Is your vehicle's breaks functional"
         )
         self.vehicle_type = self._combo_row(
             right_col,
             "🚙",
             "Vehicle Type",
-            ["car", "van", "bus", "truck", "motorcycle"]
+            ["car", "van", "bus", "truck", "motorcycle"],
+            "What kind of vehicle will you be driving?"
         ) 
         self.road_defect = self._combo_row(
             right_col,
             "🕳️",
             "Road Defect",
-            ["no defects", "worn surface", "ruts/holes"]
+            ["no defects", "worn surface", "ruts/holes"],
+            "Does the road you will be driving on have any defects?"
         )
         self.intersection_related = self._combo_row(
-        right_col,
-        "➕",
-        "Intersection",
-        ["no intersection", "at intersection"]
-    )
+            right_col,
+            "➕",
+            "Intersection",
+            ["no intersection", "at intersection"],
+            "Will you be driving in an intersection during your trip?"
+        )
         self.speed_limit = self._spin_row(
             right_col,
             "🚦",
-            "Speed Limit",
-            30, 213, 60
+            "Speed Limit(KMph)",
+            30, 213, 60,
+            "What is the road's speed limit in KM/h"
         )
 
         content_row.addLayout(left_col, 1)
@@ -191,7 +202,7 @@ class RiskInputScreen(QWidget):
         button_row.addStretch()
         outer_layout.addLayout(button_row)
 
-    def _make_row_container(self, icon_text: str, label_text: str):
+    def _make_row_container(self, icon_text: str, label_text: str, labelToolTip: str):
         row = QWidget()
         row_layout = QVBoxLayout(row)
         row_layout.setContentsMargins(0, 0, 0, 0)
@@ -217,6 +228,7 @@ class RiskInputScreen(QWidget):
                 font-weight: 700;
             }
         """)
+        label.setToolTip(labelToolTip)
 
         header.addWidget(icon)
         header.addWidget(label)
@@ -268,17 +280,18 @@ class RiskInputScreen(QWidget):
             }
         """)
 
-    def _combo_row(self, parent_layout, icon_text, label_text, items):
-        row, row_layout = self._make_row_container(icon_text, label_text)
+    def _combo_row(self, parent_layout, icon_text, label_text, items, toolTipLabel):
+        row, row_layout = self._make_row_container(icon_text, label_text, toolTipLabel)
         combo = QComboBox()
         combo.addItems(items)
+        combo.setToolTip(toolTipLabel)
         self._style_combo(combo)
         row_layout.addWidget(combo)
         parent_layout.addWidget(row)
         return combo
 
-    def _spin_row(self, parent_layout, icon_text, label_text, min_val, max_val, default):
-        row, row_layout = self._make_row_container(icon_text, label_text)
+    def _spin_row(self, parent_layout, icon_text, label_text, min_val, max_val, default, labelToolTip):
+        row, row_layout = self._make_row_container(icon_text, label_text, labelToolTip)
         spin = QSpinBox()
         spin.setRange(min_val, max_val)
         spin.setValue(default)
@@ -287,13 +300,14 @@ class RiskInputScreen(QWidget):
         parent_layout.addWidget(row)
         return spin
 
-    def _double_row(self, parent_layout, icon_text, label_text, min_val, max_val, default, decimals):
-        row, row_layout = self._make_row_container(icon_text, label_text)
+    def _double_row(self, parent_layout, icon_text, label_text, min_val, max_val, default, decimals, toolTipLabel):
+        row, row_layout = self._make_row_container(icon_text, label_text, toolTipLabel)
         spin = QDoubleSpinBox()
         spin.setRange(min_val, max_val)
         spin.setValue(default)
         spin.setDecimals(decimals)
         spin.setSingleStep(0.1)
+        spin.setToolTip(toolTipLabel)
         self._style_spin(spin)
         row_layout.addWidget(spin)
         parent_layout.addWidget(row)
