@@ -242,6 +242,15 @@ class RiskInputScreen(QWidget):
                 border: none;
                 width: 34px;
             }
+            QComboBox QAbstractItemView {
+                background: white;
+                color: #222222;
+                border: 1px solid #AFAFAF;
+                selection-background-color: #F3BC23;
+                selection-color: black;
+                padding: 4px;
+                outline: 0;
+        }
         """)
 
     def _style_spin(self, widget):
