@@ -46,10 +46,10 @@ class SignupScreen(QWidget):
 
         layout.addSpacing(8)
 
-        self.client_label = QLabel("Client Number")
+        self.client_label = QLabel("Client ID")
         layout.addWidget(self.client_label)
 
-        self.client_input = StyledLineEdit("Enter your client number", icon = "fa5s.user")
+        self.client_input = StyledLineEdit("Enter your client ID", icon = "fa5s.user")
         layout.addWidget(self.client_input)
 
         self.password_label = QLabel("Password")
