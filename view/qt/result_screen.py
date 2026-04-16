@@ -294,9 +294,40 @@ class ResultScreen(QWidget):
             "fa5s.wrench", "Predicted Maintenance Required", "-"
         )
 
-        right_col.addWidget(self.casualties_row)
-        right_col.addWidget(self.crash_type_row)
-        right_col.addWidget(self.maintenance_row)
+        results_distribution_row = QHBoxLayout()
+        results_distribution_row.setSpacing(30)
+
+        results_left = QVBoxLayout()
+        results_left.setSpacing(4)
+
+        results_left.addWidget(self.casualties_row)
+        results_left.addWidget(self.crash_type_row)
+        results_left.addWidget(self.maintenance_row)
+
+        distribution_right = QVBoxLayout()
+        distribution_right.setSpacing(2)
+
+        distribution_title = QLabel("RISK DISTRIBUTION")
+        distribution_title.setStyleSheet("font-size: 17px; font-weight: 800; color: #111;")
+        distribution_right.addWidget(distribution_title)
+
+        self.low_distribution = QLabel("Low Risk: 0.00%")
+        self.medium_distribution = QLabel("Medium Risk: 0.00%")
+        self.high_distribution = QLabel("High Risk: 0.00%")
+
+        self.low_distribution.setStyleSheet("font-size: 14px; color: #059A1C; font-weight: 600;")
+        self.medium_distribution.setStyleSheet("font-size: 14px; color: #8D8D01; font-weight: 600;")
+        self.high_distribution.setStyleSheet("font-size: 14px; color: #FF0000; font-weight: 600;")
+
+        distribution_right.addWidget(self.low_distribution)
+        distribution_right.addWidget(self.medium_distribution)
+        distribution_right.addWidget(self.high_distribution)
+
+        results_distribution_row.addLayout(results_left, 2)
+        results_distribution_row.addLayout(distribution_right, 1)
+
+        right_col.addLayout(results_distribution_row)
+
 
         reasons_title_row = QHBoxLayout()
         reasons_title_row.setSpacing(10)
@@ -548,11 +579,14 @@ class ResultScreen(QWidget):
         score: float,
         client_id: str = "-",
         inputs: dict | None = None,
+        risk_distribution: dict | None = None,
         predicted_casualties: str = "-",
         predicted_crash_type: str = "-",
         predicted_maintenance: str = "-",
         reasons: list[str] | None = None,
     ):
+        risk_distribution = risk_distribution or {"low": 0.0, "medium": 0.0, "high": 0.0}
+        
         self.current_risk_level = risk_level
         self.current_client_id = client_id
         self.current_inputs = inputs or {}
@@ -593,7 +627,10 @@ class ResultScreen(QWidget):
         self.casualties_text.setText(f"Predicted Number of Casualties: {predicted_casualties}")
         self.crash_type_text.setText(f"Predicted Crash Type: {predicted_crash_type}")
         self.maintenance_text.setText(f"Predicted Maintenance Required: {predicted_maintenance}")
-
+        self.low_distribution.setText(f"Low Risk: {risk_distribution['low']:.2f}%")
+        self.medium_distribution.setText(f"Medium Risk: {risk_distribution['medium']:.2f}%")
+        self.high_distribution.setText(f"High Risk: {risk_distribution['high']:.2f}%")
+        
         while self.reasons_box.count():
             item = self.reasons_box.takeAt(0)
             widget = item.widget()
@@ -625,7 +662,11 @@ class ResultScreen(QWidget):
         self.casualties_text.setText("Predicted Number of Casualties: -")
         self.crash_type_text.setText("Predicted Crash Type: -")
         self.maintenance_text.setText("Predicted Maintenance Required: -")
-
+        
+        self.low_distribution.setText("Low Risk: 0.00%")
+        self.medium_distribution.setText("Medium Risk: 0.00%")
+        self.high_distribution.setText("High Risk: 0.00%")
+        
         while self.reasons_box.count():
             item = self.reasons_box.takeAt(0)
             widget = item.widget()

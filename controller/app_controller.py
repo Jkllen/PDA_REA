@@ -105,6 +105,7 @@ class AppController:
                 score=score,
                 client_id=self.current_client,
                 inputs=user_inputs,
+                risk_distribution=risk_distribution,
                 predicted_casualties=predicted_casualties,
                 predicted_crash_type=predicted_crash_type,
                 predicted_maintenance=predicted_maintenance,
