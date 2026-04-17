@@ -59,14 +59,17 @@ class RiskInputScreen(QWidget):
         scroll_layout = QVBoxLayout(scroll_container)
         scroll_layout.setContentsMargins(10, 10, 10, 10)
         scroll_layout.setSpacing(0)
-
+        
         content_row = QHBoxLayout()
-        content_row.setSpacing(44)
+        content_row.setSpacing(32)
 
         left_col = QVBoxLayout()
         right_col = QVBoxLayout()
-        left_col.setSpacing(20)
-        right_col.setSpacing(20)
+        left_col.setSpacing(12)
+        right_col.setSpacing(12)
+        
+        left_col.setAlignment(Qt.AlignmentFlag.AlignTop)
+        right_col.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.driver_age = self._spin_row(left_col, "👤", "Driver Age", 18, 70, 30, "What is the age of the person driving in Years?")
         self.driver_experience = self._spin_row(left_col, "🪪", "Driver Experience", 0, 50, 5, "How long has the person been driving in Years?")
@@ -143,22 +146,25 @@ class RiskInputScreen(QWidget):
             "Does the road you will be driving on have any defects?"
         )
         self.intersection_related = self._combo_row(
-            right_col,
+            left_col,
             "➕",
             "Intersection",
             ["no intersection", "at intersection"],
             "Will you be driving in an intersection during your trip?"
         )
         self.speed_limit = self._spin_row(
-            right_col,
+            left_col,
             "🚦",
             "Speed Limit(KMph)",
             30, 213, 60,
             "What is the road's speed limit in KM/h"
         )
-
+        left_col.addStretch()
+        right_col.addStretch()
+        
         content_row.addLayout(left_col, 1)
         content_row.addLayout(right_col, 1)
+        
         scroll_layout.addLayout(content_row)
         scroll_layout.addStretch()
 
@@ -206,7 +212,7 @@ class RiskInputScreen(QWidget):
         row = QWidget()
         row_layout = QVBoxLayout(row)
         row_layout.setContentsMargins(0, 0, 0, 0)
-        row_layout.setSpacing(8)
+        row_layout.setSpacing(5)
 
         header = QHBoxLayout()
         header.setContentsMargins(0, 0, 0, 0)
