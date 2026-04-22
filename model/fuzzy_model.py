@@ -490,8 +490,15 @@ def plot_rule_stats(avg_activation, fire_rate):
     plt.grid()
     plt.show()
 
+def get_rule_output_label(rule):
+    try:
+        return rule.consequent[0].term.label
+    except Exception:
+        return "unknown"
+
 def detect_conflicts(samples, threshold=0.3):
     conflicts = []
+    rules_list = list(system.rules)
 
     for s in samples:
         sim = ctrl.ControlSystemSimulation(system)
@@ -502,15 +509,14 @@ def detect_conflicts(samples, threshold=0.3):
         sim.compute()
 
         active_rules = []
-        rules_list = list(system.rules)
+
         for i, rule in enumerate(rules_list):
             strength = rule.aggregate_firing[sim]
+
             if strength > threshold:
-                consequent = list(rule.consequent.keys())[0]
-                label = list(rule.consequent[consequent].keys())[0]
+                label = get_rule_output_label(rule)
                 active_rules.append((i, label))
 
-        # compare pairs
         for i in range(len(active_rules)):
             for j in range(i + 1, len(active_rules)):
                 if active_rules[i][1] != active_rules[j][1]:
@@ -530,11 +536,17 @@ def group_rules_by_output():
     return groups
 
 def rule_coverage_report(avg_activation, fire_rate):
+    avg_activation = np.asarray(avg_activation, dtype=float)
+    fire_rate = np.asarray(fire_rate, dtype=float)
+
     for i, (a, f) in enumerate(zip(avg_activation, fire_rate)):
+
         if f < 0.05:
-            print(f"[Rule {i}] ❌ Rarely fires (dead) | freq={f:.3f}")
+            print(f"[Rule {i}] ❌ Rarely fires | freq={f:.3f}")
+
         elif f > 0.8:
             print(f"[Rule {i}] ⚠️ Always active | freq={f:.3f}")
+
         elif a > 0.5:
             print(f"[Rule {i}] 🔥 Strong influence | activation={a:.3f}")
 
