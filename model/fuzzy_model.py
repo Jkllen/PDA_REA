@@ -409,3 +409,141 @@ def evaluate_fuzzy(inputs: dict):
     recommendations = generate_recommendations(risk_level, reasons)
 
     return score, risk_level, risk_distribution, reasons, recommendations
+
+
+# =====================================================================
+
+
+### TESTING ONLY
+
+
+# =====================================================================
+import numpy as np
+
+def sample_inputs(n=1000):
+    rng = np.random.default_rng(42)
+    samples = []
+
+    for _ in range(n):
+        samples.append({
+            "driver_age": rng.uniform(18, 70),
+            "alcohol_risk": rng.uniform(0, 1),
+            "experience_risk": rng.uniform(0, 1),
+            "time_risk": rng.uniform(0, 1),
+            "trip_duration_risk": rng.uniform(0, 1),
+            "weather_risk": rng.uniform(0, 1),
+            "road_issue_risk": rng.uniform(0, 1),
+            "road_type_risk": rng.uniform(0, 1),
+            "traffic_risk": rng.uniform(0, 1),
+            "road_condition_risk": rng.uniform(0, 1),
+            "intersection_risk": rng.uniform(0, 1),
+            "vehicle_type_risk": rng.uniform(0, 1),
+            "mechanical_risk": rng.uniform(0, 1),
+            "vehicle_age_risk": rng.uniform(0, 1),
+            "brake_risk": rng.uniform(0, 1),
+            "maintenance_risk": rng.uniform(0, 1),
+        })
+    return samples
+
+def analyze_rule_activation(samples):
+    rules_list = list(system.rules)
+    n_rules = len(rules_list)
+
+    total_activation = np.zeros(n_rules)
+    fire_count = np.zeros(n_rules)
+
+    for s in samples:
+        sim = ctrl.ControlSystemSimulation(system)
+
+        for k, v in s.items():
+            sim.input[k] = v
+
+        sim.compute()
+
+        for i, rule in enumerate(rules_list):
+            strength = rule.aggregate_firing[sim]
+
+            total_activation[i] += strength
+            if strength > 0.01:
+                fire_count[i] += 1
+
+    avg_activation = total_activation / len(samples)
+    fire_rate = fire_count / len(samples)
+
+    return avg_activation, fire_rate
+
+import matplotlib.pyplot as plt
+
+def plot_rule_stats(avg_activation, fire_rate):
+    idx = np.arange(len(avg_activation))
+
+    plt.figure()
+    plt.scatter(avg_activation, fire_rate)
+
+    for i in idx:
+        plt.text(avg_activation[i], fire_rate[i], str(i), fontsize=8)
+
+    plt.xlabel("Average Activation Strength")
+    plt.ylabel("Firing Frequency")
+    plt.title("Rule Activation Map")
+    plt.grid()
+    plt.show()
+
+def detect_conflicts(samples, threshold=0.3):
+    conflicts = []
+
+    for s in samples:
+        sim = ctrl.ControlSystemSimulation(system)
+
+        for k, v in s.items():
+            sim.input[k] = v
+
+        sim.compute()
+
+        active_rules = []
+        rules_list = list(system.rules)
+        for i, rule in enumerate(rules_list):
+            strength = rule.aggregate_firing[sim]
+            if strength > threshold:
+                consequent = list(rule.consequent.keys())[0]
+                label = list(rule.consequent[consequent].keys())[0]
+                active_rules.append((i, label))
+
+        # compare pairs
+        for i in range(len(active_rules)):
+            for j in range(i + 1, len(active_rules)):
+                if active_rules[i][1] != active_rules[j][1]:
+                    conflicts.append((active_rules[i], active_rules[j]))
+
+    return conflicts
+
+def group_rules_by_output():
+    groups = {"low": [], "medium": [], "high": []}
+
+    rules_list = list(system.rules)
+    for i, rule in enumerate(rules_list):
+        consequent = list(rule.consequent.keys())[0]
+        label = list(rule.consequent[consequent].keys())[0]
+        groups[label].append(i)
+
+    return groups
+
+def rule_coverage_report(avg_activation, fire_rate):
+    for i, (a, f) in enumerate(zip(avg_activation, fire_rate)):
+        if f < 0.05:
+            print(f"[Rule {i}] ❌ Rarely fires (dead) | freq={f:.3f}")
+        elif f > 0.8:
+            print(f"[Rule {i}] ⚠️ Always active | freq={f:.3f}")
+        elif a > 0.5:
+            print(f"[Rule {i}] 🔥 Strong influence | activation={a:.3f}")
+
+samples = sample_inputs(1000)
+
+avg_activation, fire_rate = analyze_rule_activation(samples)
+
+plot_rule_stats(avg_activation, fire_rate)
+
+rule_coverage_report(avg_activation, fire_rate)
+
+conflicts = detect_conflicts(samples[:200])
+print("Conflicts found:", len(conflicts))
