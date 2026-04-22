@@ -9,6 +9,7 @@ class AppController:
     def __init__(self):
         self.window = MainWindow()
         self.current_client = None
+        self.last_client_id = None
         self.current_report = None
         self.current_encrypted_file = None
 
@@ -52,6 +53,7 @@ class AppController:
         self.current_client = None
         self.current_report = None
         self.current_encrypted_file = None
+        self.last_client_id = None
         self.last_inputs = {}
         self.last_score = 0.0
         self.last_risk_level = "-"
@@ -186,16 +188,32 @@ class AppController:
 
             self.window.result_screen.set_decrypted_report(decrypted)
 
+            # sync controller state from decrypted result so advisory also updates
+            self.last_inputs = self.window.result_screen.current_inputs
+            self.last_risk_level = self.window.result_screen.current_risk_level
+            self.last_reasons = self.window.result_screen.current_reasons
+            self.last_recommendations = self.window.result_screen.current_recommendations
+            self.last_client_id = self.window.result_screen.current_client_id
+
+            score_text = self.window.result_screen.score_label.text().replace("Evaluation Score:", "").strip()
+            try:
+                self.last_score = float(score_text)
+            except ValueError:
+                self.last_score = 0.0
+
+            self.window.show_result()
+
         except Exception as error:
             self._show_message("Decryption Error", f"Failed to decrypt report.\n\n{error}")
 
+        
     def show_advisory(self):
-        if not self.current_client:
-            self._show_message("Session Error", "Please evaluate first.")
+        if not self.current_client and not self.last_client_id:
+            self._show_message("Session Error", "Please evaluate or decrypt a report first.")
             return
 
         self.window.advisory_screen.set_advisory(
-            client_id=self.current_client,
+            client_id=self.last_client_id or self.current_client,
             risk_level=self.last_risk_level,
             score=self.last_score,
             inputs=self.last_inputs,

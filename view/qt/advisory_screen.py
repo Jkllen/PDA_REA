@@ -30,6 +30,7 @@ class AdvisoryCard(QFrame):
                 border-radius: 16px;
             }
         """)
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 14, 18, 14)
         layout.setSpacing(8)
@@ -39,6 +40,7 @@ class AdvisoryCard(QFrame):
 
         icon = QLabel()
         icon.setPixmap(qta.icon(icon_name, color=accent).pixmap(22, 22))
+
         self.title_label = QLabel(title)
         self.title_label.setStyleSheet("font-size: 17px; font-weight: 800; color: #111;")
 
@@ -71,12 +73,15 @@ class AdvisoryScreen(QWidget):
         super().__init__(parent)
         self.current_risk_level = "-"
         self.current_client_id = "-"
+        self.current_inputs = {}
+        self.current_reasons = []
+        self.current_recommendations = []
         self._build_ui()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
 
-        top_margin = 190
+        top_margin = 170
         available_w = self.width() - 70
         available_h = self.height() - top_margin - 35
 
@@ -84,7 +89,7 @@ class AdvisoryScreen(QWidget):
         card_h = max(520, min(700, available_h))
 
         x = (self.width() - card_w) // 2
-        y = max(top_margin, (self.height() - card_h) // 2)
+        y = top_margin
         self.card.setGeometry(x, y, card_w, card_h)
 
     def _build_ui(self):
@@ -177,11 +182,13 @@ class AdvisoryScreen(QWidget):
         self.risk_card = AdvisoryCard("RISK LEVEL ADVISORY", "fa5s.exclamation-triangle")
         self.reasons_card = AdvisoryCard("KEY RISK FACTORS", "fa5s.list")
         self.recommendation_card = AdvisoryCard("RECOMMENDED ACTIONS", "fa5s.shield-alt")
+        self.uncertainty_card = AdvisoryCard("IMPORTANT NOTICE", "fa5s.sync-alt")
         self.legal_card = AdvisoryCard("LEGAL AND SAFETY REMINDERS", "fa5s.gavel")
 
         self.scroll_layout.addWidget(self.risk_card)
         self.scroll_layout.addWidget(self.reasons_card)
         self.scroll_layout.addWidget(self.recommendation_card)
+        self.scroll_layout.addWidget(self.uncertainty_card)
         self.scroll_layout.addWidget(self.legal_card)
         self.scroll_layout.addStretch()
 
@@ -265,6 +272,9 @@ class AdvisoryScreen(QWidget):
     ):
         self.current_client_id = client_id
         self.current_risk_level = risk_level
+        self.current_inputs = inputs or {}
+        self.current_reasons = reasons or []
+        self.current_recommendations = recommendations or []
 
         self.client_label.setText(f"Client ID: {client_id}")
         self.score_label.setText(f"Evaluation Score: {score:.2f}")
@@ -275,50 +285,68 @@ class AdvisoryScreen(QWidget):
 
         if risk_level == "Low Risk":
             self.risk_card.set_content(
-                "CLEAR",
+                "LOW RISK",
                 [
-                    "Current conditions appear manageable for travel.",
-                    "Continue observing safe and responsible driving habits.",
-                    "Do a final quick vehicle check before departure.",
+                    "Current conditions appear generally manageable for travel.",
+                    "The driver may proceed while maintaining normal caution and safe driving practice.",
+                    "A quick final vehicle and route check is still recommended before departure.",
                 ],
             )
         elif risk_level == "Medium Risk":
             self.risk_card.set_content(
-                "CAUTION",
+                "MEDIUM RISK",
                 [
-                    "There are notable pre-driving risk factors present.",
-                    "Proceed only if the vehicle and driver condition are acceptable.",
-                    "Reduce exposure by slowing down, choosing a safer route, or delaying departure.",
+                    "There are notable risk factors present before travel.",
+                    "The driver should proceed only with extra caution and proper preparation.",
+                    "Trip conditions should be reassessed before departure if possible.",
                 ],
             )
         else:
             self.risk_card.set_content(
                 "HIGH RISK",
                 [
-                    "Current conditions make travel unsafe or strongly discouraged.",
-                    "Delay the trip until the main risk factors are resolved.",
-                    "Use alternate transportation if necessary.",
+                    "Current conditions indicate a serious pre-driving safety concern.",
+                    "Travel should be delayed or avoided until the major risk factors are addressed.",
+                    "Alternative transportation or postponement is strongly advised.",
                 ],
             )
 
         self.reasons_card.set_content(
-            "FACTORS DETECTED",
-            reasons if reasons else ["No major risk factors were detected beyond safer baseline conditions."]
+            "FACTORS IDENTIFIED",
+            self.current_reasons if self.current_reasons else ["No major risk factors were identified beyond safer baseline conditions."]
         )
 
         self.recommendation_card.set_content(
-            "WHAT YOU SHOULD DO",
-            recommendations if recommendations else ["Continue following normal road safety practices."]
+            "SAFETY GUIDANCE",
+            self.current_recommendations if self.current_recommendations else ["Continue following normal road safety practices."]
+        )
+
+        self.uncertainty_card.set_content(
+            "RISK LEVEL MAY CHANGE",
+            [
+                "This advisory is based only on the conditions provided during the pre-driving evaluation.",
+                "Actual risk may still change because of unexpected events such as sudden weather shifts, traffic build-up, road obstructions, vehicle issues, or driver condition changes.",
+                "The driver should continue reassessing conditions even after the evaluation result is shown.",
+            ],
         )
 
         legal_lines = [
             "Drivers are expected to provide honest and accurate inputs during evaluation.",
+            "This system is intended for non-professional licensed private drivers.",
             "Under Republic Act No. 4136, responsible and careful driving is expected at all times.",
-            "Do not drive when impaired, unfit, or when your vehicle is not roadworthy.",
-            "Always carry your license and vehicle documents.",
+            "Do not drive when impaired, unfit, fatigued, or when your vehicle is not roadworthy.",
         ]
 
-        if str(inputs.get("driver_alcohol", "")).lower() == "yes":
+        alcohol_text = str(self.current_inputs.get("alcohol_consumption", "")).lower()
+        if alcohol_text not in {"", "none", "select"}:
             legal_lines.append("Driving after alcohol consumption may place you and others at serious risk.")
+
+        mechanical_text = str(self.current_inputs.get("recent_mechanical_issues", "")).lower()
+        if mechanical_text in {"major issues (affects safety)", "moderate issues (needs attention)"}:
+            legal_lines.append("Vehicle safety-related mechanical issues should be resolved before driving.")
+
+        brake_text = str(self.current_inputs.get("brake_condition", "")).lower()
+        if brake_text in {"noticeable delay", "weak / unreliable", "not sure"}:
+            legal_lines.append("Brake condition must be verified before travel if responsiveness is uncertain or reduced.")
 
         self.legal_card.set_content("RESPONSIBILITY REMINDERS", legal_lines)
