@@ -377,6 +377,7 @@ def generate_recommendations(risk_level: str, reasons: list[str]) -> list[str]:
 # MAIN EVALUATION
 # =========================================================
 def evaluate_fuzzy(inputs: dict):
+    global sim
     sim = ctrl.ControlSystemSimulation(system)
 
     sim.input["driver_age"] = int(inputs["driver_age"])
