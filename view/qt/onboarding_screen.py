@@ -210,7 +210,7 @@ class OnboardingScreen(QWidget):
             QMessageBox.warning(
                 self,
                 "Confirmation Required",
-                "Please confirm that you are aware of your driving behavior, responsible driving behavior is expected under Republic Act No. 4136",
+                "Please confirm that you are aware of your current state, driving behavior, vehicle condition, and the route you will be taking.\nResponsible driving behavior is expected under Republic Act No. 4136",
             )
             return
         self.proceed_requested.emit()
