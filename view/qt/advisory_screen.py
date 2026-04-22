@@ -5,7 +5,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QFrame,
-    QSizePolicy,
     QScrollArea,
 )
 from PyQt6.QtCore import pyqtSignal, Qt
@@ -19,8 +18,6 @@ MEDIUM_COLOR = "#8D8D01"
 HIGH_COLOR = "#FF0000"
 ORANGE = "#F28C13"
 DARK_BUTTON = "#343438"
-YELLOW_START = "#FCCC74"
-YELLOW_END = "#F3BC23"
 
 
 class AdvisoryCard(QFrame):
@@ -178,16 +175,14 @@ class AdvisoryScreen(QWidget):
         self.scroll_layout.setSpacing(12)
 
         self.risk_card = AdvisoryCard("RISK LEVEL ADVISORY", "fa5s.exclamation-triangle")
-        self.casualty_card = AdvisoryCard("CASUALTY ADVISORY", "fa5s.users")
-        self.crash_card = AdvisoryCard("CRASH TYPE ADVISORY", "fa5s.car-crash")
-        self.maintenance_card = AdvisoryCard("MAINTENANCE ADVISORY", "fa5s.wrench")
-        self.general_card = AdvisoryCard("GENERAL RECOMMENDATIONS", "fa5s.info-circle")
+        self.reasons_card = AdvisoryCard("KEY RISK FACTORS", "fa5s.list")
+        self.recommendation_card = AdvisoryCard("RECOMMENDED ACTIONS", "fa5s.shield-alt")
+        self.legal_card = AdvisoryCard("LEGAL AND SAFETY REMINDERS", "fa5s.gavel")
 
         self.scroll_layout.addWidget(self.risk_card)
-        self.scroll_layout.addWidget(self.casualty_card)
-        self.scroll_layout.addWidget(self.crash_card)
-        self.scroll_layout.addWidget(self.maintenance_card)
-        self.scroll_layout.addWidget(self.general_card)
+        self.scroll_layout.addWidget(self.reasons_card)
+        self.scroll_layout.addWidget(self.recommendation_card)
+        self.scroll_layout.addWidget(self.legal_card)
         self.scroll_layout.addStretch()
 
         self.scroll.setWidget(self.scroll_content)
@@ -264,10 +259,9 @@ class AdvisoryScreen(QWidget):
         client_id: str,
         risk_level: str,
         score: float,
-        predicted_casualties: str,
-        predicted_crash_type: str,
-        predicted_maintenance: str,
         inputs: dict,
+        reasons: list[str],
+        recommendations: list[str],
     ):
         self.current_client_id = client_id
         self.current_risk_level = risk_level
@@ -279,188 +273,52 @@ class AdvisoryScreen(QWidget):
             f"font-size: 22px; font-weight: 600; color: {self._risk_color(risk_level)};"
         )
 
-        # Risk-level advisory
         if risk_level == "Low Risk":
             self.risk_card.set_content(
                 "CLEAR",
                 [
-                    "Follow all traffic rules and speed limits.",
-                    "Wear your seatbelt at all times.",
-                    "Avoid using your phone while driving.",
-                    "Stay alert even if roads look clear.",
+                    "Current conditions appear manageable for travel.",
+                    "Continue observing safe and responsible driving habits.",
+                    "Do a final quick vehicle check before departure.",
                 ],
             )
         elif risk_level == "Medium Risk":
             self.risk_card.set_content(
-                "WARNING",
+                "CAUTION",
                 [
-                    "Slow down — conditions are riskier than normal.",
-                    "Keep a safe distance from the vehicle ahead.",
-                    "Avoid overtaking near corners and intersections.",
-                    "Do not drive if you feel tired or distracted.",
-                    "If unsure, pull over and wait for conditions to improve.",
+                    "There are notable pre-driving risk factors present.",
+                    "Proceed only if the vehicle and driver condition are acceptable.",
+                    "Reduce exposure by slowing down, choosing a safer route, or delaying departure.",
                 ],
             )
         else:
             self.risk_card.set_content(
-                "CRITICAL — DO NOT DRIVE",
+                "HIGH RISK",
                 [
-                    "Stop driving immediately if possible.",
-                    "Turn on all your lights.",
-                    "Do not push through flooding, complete darkness, or very poor road conditions.",
-                    "Let another driver take over, or delay your trip.",
-                    "Call MMDA Hotline 136 or Emergency 911 if needed.",
+                    "Current conditions make travel unsafe or strongly discouraged.",
+                    "Delay the trip until the main risk factors are resolved.",
+                    "Use alternate transportation if necessary.",
                 ],
             )
 
-        # Casualty advisory
-        if predicted_casualties == "Few":
-            self.casualty_card.set_content(
-                "ADVISORY",
-                [
-                    "Make sure all passengers are seated properly.",
-                    "Do not overload your vehicle.",
-                    "Keep seatbelts on.",
-                    "Stay focused and drive carefully.",
-                ],
-            )
-        elif predicted_casualties == "Moderate":
-            self.casualty_card.set_content(
-                "WARNING",
-                [
-                    "Reduce speed — more people are at risk here.",
-                    "Do not overload your vehicle.",
-                    "Take an alternate route if traffic is heavy.",
-                    "Stop and rest if you feel fatigued before continuing.",
-                ],
-            )
-        else:
-            self.casualty_card.set_content(
-                "CRITICAL — DO NOT DRIVE",
-                [
-                    "Do not drive if road conditions are dangerous.",
-                    "Avoid this road and use an alternate route.",
-                    "Large vehicles should park safely and wait.",
-                    "Delay the trip or let a more experienced driver take over.",
-                    "If an accident happens, call 911 immediately.",
-                ],
-            )
+        self.reasons_card.set_content(
+            "FACTORS DETECTED",
+            reasons if reasons else ["No major risk factors were detected beyond safer baseline conditions."]
+        )
 
-        # Crash-type advisory
-        if predicted_crash_type == "No injury":
-            self.crash_card.set_content(
-                "CLEAR",
-                [
-                    "Drive normally but stay cautious.",
-                    "Keep a safe distance from other vehicles.",
-                    "Carry your license and vehicle documents at all times.",
-                ],
-            )
-        elif predicted_crash_type == "Drive away":
-            self.crash_card.set_content(
-                "ADVISORY",
-                [
-                    "If a minor incident happens, stop and check all parties.",
-                    "Exchange information and take photos of any damage.",
-                    "Do not flee the scene.",
-                ],
-            )
-        elif predicted_crash_type == "Injury":
-            self.crash_card.set_content(
-                "WARNING",
-                [
-                    "Slow down — there is a real risk of injury under current conditions.",
-                    "If an accident happens, do not leave, call 911, and give first aid if you can.",
-                    "Avoid this road if conditions are unsafe.",
-                    "If tired or stressed, let another driver take over.",
-                ],
-            )
-        else:
-            self.crash_card.set_content(
-                "CRITICAL — DO NOT DRIVE",
-                [
-                    "Risk of a severe crash that can make your vehicle undriveable.",
-                    "Do not drive a damaged vehicle.",
-                    "Call towing through MMDA 136 or use alternate transport.",
-                    "Do not leave a damaged vehicle blocking traffic.",
-                ],
-            )
+        self.recommendation_card.set_content(
+            "WHAT YOU SHOULD DO",
+            recommendations if recommendations else ["Continue following normal road safety practices."]
+        )
 
-        # Maintenance advisory
-        if predicted_maintenance == "No":
-            self.maintenance_card.set_content(
-                "CLEAR",
-                [
-                    "Vehicle is in good condition — keep it that way.",
-                    "Check tires, brakes, and lights before every trip.",
-                    "Schedule regular maintenance to stay roadworthy.",
-                ],
-            )
-        else:
-            self.maintenance_card.set_content(
-                "CRITICAL — DO NOT DRIVE",
-                [
-                    "Your vehicle has a problem that needs fixing — do not drive it.",
-                    "Call a mechanic for an on-site check or have it towed.",
-                    "Use Grab, Angkas, or public transport in the meantime.",
-                    "Driving this vehicle puts you and others in danger.",
-                ],
-            )
-
-        # General recommendations
-        general_lines = [
-            "Always bring your driver's license, OR, and CR.",
-            "Renew your license and registration before they expire.",
+        legal_lines = [
+            "Drivers are expected to provide honest and accurate inputs during evaluation.",
+            "Under Republic Act No. 4136, responsible and careful driving is expected at all times.",
+            "Do not drive when impaired, unfit, or when your vehicle is not roadworthy.",
+            "Always carry your license and vehicle documents.",
         ]
 
-        if float(inputs.get("driver_alcohol", 0)) > 0:
-            general_lines.extend([
-                "You are not safe to drive while intoxicated.",
-                "Call a sober friend or use Grab / Angkas.",
-                "Stay parked in a safe place until you are sober.",
-            ])
+        if str(inputs.get("driver_alcohol", "")).lower() == "yes":
+            legal_lines.append("Driving after alcohol consumption may place you and others at serious risk.")
 
-        if str(inputs.get("intersection", "")).lower() == "at intersection":
-            general_lines.extend([
-                "Slow down to a maximum of 20 kph.",
-                "Yield to vehicles coming from the right.",
-                "Do not overtake at intersections.",
-            ])
-
-        if str(inputs.get("vehicle_type", "")).lower() == "motorcycle":
-            general_lines.extend([
-                "Check that your headlight and taillight are working.",
-                "Wear your helmet and protective gear.",
-                "Do not overtake near corners or intersections.",
-            ])
-
-        if str(inputs.get("road_type", "")).lower() == "city road":
-            general_lines.extend([
-                "Observe the 30 kph limit on city streets.",
-                "Reduce to 20 kph near intersections and crowded zones.",
-                "Watch out for pedestrians at all times.",
-            ])
-
-        general_lines.extend([
-            "If any accident occurs, stay at the scene.",
-            "Show your license to the other party and to authorities.",
-            "Help any injured person immediately.",
-            "Call 911 for emergencies.",
-        ])
-
-        self.general_card.set_content("ADVISORY / LEGAL NOTICE", general_lines)
-
-    def clear_advisory(self):
-        self.client_label.setText("Client ID: -")
-        self.score_label.setText("Evaluation Score: -")
-        self.risk_value.setText("-")
-        self.risk_value.setStyleSheet("font-size: 22px; font-weight: 600; color: #111;")
-
-        for card in (
-            self.risk_card,
-            self.casualty_card,
-            self.crash_card,
-            self.maintenance_card,
-            self.general_card,
-        ):
-            card.set_content("", [])
+        self.legal_card.set_content("RESPONSIBILITY REMINDERS", legal_lines)

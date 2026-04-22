@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal, Qt, QRectF
 from PyQt6.QtGui import QPainter, QColor
 import qtawesome as qta
+import re
 
 from view.qt.ui_parts import CardFrame, BROWN
 
@@ -25,8 +26,6 @@ DIM_RED = "#972414"
 
 ORANGE = "#F28C13"
 DARK_BUTTON = "#343438"
-GREEN_BUTTON = "#22952E"
-YELLOW_BUTTON = "#F0BF2C"
 
 
 class TrafficLightWidget(QWidget):
@@ -90,22 +89,24 @@ class ResultScreen(QWidget):
         self.current_client_id = "-"
         self.current_inputs = {}
         self.current_reasons = []
+        self.current_recommendations = []
+        self.report_text = ""
         self._build_ui()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
 
-        top_margin = 205
+        top_margin = 190
         available_w = self.width() - 70
         available_h = self.height() - top_margin - 35
 
-        card_w = max(1020, min(1180, available_w))
-        card_h = max(460, min(500, available_h))
+        card_w = max(1100, min(1250, available_w))
+        card_h = max(480, min(515, available_h))
 
         x = (self.width() - card_w) // 2
         y = max(top_margin, (self.height() - card_h) // 2)
         self.card.setGeometry(x, y, card_w, card_h)
-        
+
         light_w = 360
         light_h = 120
         light_x = (self.width() - light_w) // 2
@@ -115,7 +116,7 @@ class ResultScreen(QWidget):
 
     def _build_ui(self):
         self.card = CardFrame(self)
-        
+
         self.traffic_light = TrafficLightWidget(self)
         self.traffic_light.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.traffic_light.raise_()
@@ -214,52 +215,55 @@ class ResultScreen(QWidget):
         input_grid.setSpacing(34)
 
         self.left_inputs_box = QVBoxLayout()
-        self.left_inputs_box.setSpacing(4)
+        self.left_inputs_box.setSpacing(6)
+
         self.right_inputs_box = QVBoxLayout()
-        self.right_inputs_box.setSpacing(4)
+        self.right_inputs_box.setSpacing(6)
 
         self.input_labels = {}
 
         left_fields = [
             ("driver_age", "fa5s.user", "Driver Age"),
-            ("driver_experience", "fa5s.star", "Driver Experience"),
-            ("driver_alcohol", "fa5s.wine-bottle", "Alcohol Level"),
-            ("traffic_density", "fa5s.car", "Traffic Density"),
-            ("vehicle_age", "fa5s.calendar-alt", "Vehicle Age"),
+            ("alcohol_consumption", "fa5s.wine-bottle", "Alcohol Consumption"),
+            ("driving_experience", "fa5s.star", "Driving Experience"),
+            ("time_of_day", "fa5s.clock", "Time of Day"),
+            ("expected_trip_duration", "fa5s.hourglass-half", "Expected Trip Duration"),
             ("vehicle_type", "fa5s.car-side", "Vehicle Type"),
-            ("failure_history", "fa5s.file-alt", "Failure History"),
-            ("brake_condition", "fa5s.bullseye", "Brake Condition"),
+            ("vehicle_age", "fa5s.calendar-alt", "Vehicle Age"),
         ]
 
         right_fields = [
-            ("weather", "fa5s.cloud-rain", "Weather"),
-            ("lighting", "fa5s.moon", "Lighting"),
-            ("road_condition", "fa5s.road", "Road Condition"),
-            ("time_of_day", "fa5s.sun", "Time of Day"),
+            ("recent_mechanical_issues", "fa5s.cogs", "Recent Mechanical Issues"),
+            ("brake_condition", "fa5s.tools", "Brake Condition"),
+            ("last_vehicle_maintenance", "fa5s.wrench", "Last Vehicle Maintenance"),
+            ("weather_condition", "fa5s.cloud-rain", "Weather Condition"),
+            ("visible_road_issues", "fa5s.exclamation-triangle", "Visible Road Issues"),
             ("road_type", "fa5s.road", "Road Type"),
-            ("road_defect", "fa5s.exclamation-triangle", "Road Defect"),
-            ("intersection", "fa5s.hashtag", "Intersection"),
-            ("speed_limit", "fa5s.tachometer-alt", "Speed Limit"),
+            ("traffic_level", "fa5s.car", "Traffic Level"),
+            ("road_condition", "fa5s.road", "Road Condition"),
+            ("intersections_busy_crossings", "fa5s.hashtag", "Intersections / Busy Crossings"),
         ]
 
         for key, icon_name, title in left_fields:
             row, value_lbl = self._make_field_row(icon_name, title)
             self.left_inputs_box.addWidget(row)
             self.input_labels[key] = value_lbl
-            self.left_inputs_box.addStretch()
+
+        self.left_inputs_box.addStretch()
 
         for key, icon_name, title in right_fields:
             row, value_lbl = self._make_field_row(icon_name, title)
             self.right_inputs_box.addWidget(row)
             self.input_labels[key] = value_lbl
-            self.right_inputs_box.addStretch()
+
+        self.right_inputs_box.addStretch()
 
         input_grid.addLayout(self.left_inputs_box)
         input_grid.addLayout(self.right_inputs_box)
         left_col.addLayout(input_grid)
         left_col.addStretch()
 
-        content_row.addLayout(left_col, 1)
+        content_row.addLayout(left_col, 4)
 
         vline = QFrame()
         vline.setFrameShape(QFrame.Shape.VLine)
@@ -284,25 +288,20 @@ class ResultScreen(QWidget):
         results_title_row.addStretch()
         right_col.addLayout(results_title_row)
 
-        self.casualties_row, self.casualties_text = self._make_simple_result_label(
-            "fa5s.users", "Predicted Number of Casualties", "-"
+        self.summary_row, self.summary_text = self._make_simple_result_label(
+            "fa5s.info-circle", "Evaluation Summary", "-"
         )
-        self.crash_type_row, self.crash_type_text = self._make_simple_result_label(
-            "fa5s.car-crash", "Predicted Crash Type", "-"
-        )
-        self.maintenance_row, self.maintenance_text = self._make_simple_result_label(
-            "fa5s.wrench", "Predicted Maintenance Required", "-"
+        self.action_row, self.action_text = self._make_simple_result_label(
+            "fa5s.shield-alt", "Recommended Action", "-"
         )
 
         results_distribution_row = QHBoxLayout()
         results_distribution_row.setSpacing(30)
 
         results_left = QVBoxLayout()
-        results_left.setSpacing(4)
-
-        results_left.addWidget(self.casualties_row)
-        results_left.addWidget(self.crash_type_row)
-        results_left.addWidget(self.maintenance_row)
+        results_left.setSpacing(8)
+        results_left.addWidget(self.summary_row)
+        results_left.addWidget(self.action_row)
 
         distribution_right = QVBoxLayout()
         distribution_right.setSpacing(2)
@@ -327,7 +326,6 @@ class ResultScreen(QWidget):
         results_distribution_row.addLayout(distribution_right, 1)
 
         right_col.addLayout(results_distribution_row)
-
 
         reasons_title_row = QHBoxLayout()
         reasons_title_row.setSpacing(10)
@@ -391,7 +389,7 @@ class ResultScreen(QWidget):
         right_col.addWidget(self.reasons_scroll)
         right_col.addStretch()
 
-        content_row.addLayout(right_col, 1)
+        content_row.addLayout(right_col, 3)
         layout.addLayout(content_row, 0)
 
         # ---------------- BOTTOM AREA ----------------
@@ -409,7 +407,6 @@ class ResultScreen(QWidget):
         self.encrypt_button.clicked.connect(self.encrypt_requested.emit)
         self.decrypt_button.clicked.connect(self.decrypt_requested.emit)
 
-        
         for btn in (self.back_button, self.encrypt_button, self.decrypt_button):
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setMinimumHeight(54)
@@ -511,15 +508,15 @@ class ResultScreen(QWidget):
 
         title_lbl = QLabel(f"{title}:")
         title_lbl.setStyleSheet("font-size: 14px; color: #333; font-weight: 500;")
-        title_lbl.setMinimumWidth(170)
+        title_lbl.setMinimumWidth(140)
 
         value_lbl = QLabel("-")
-        value_lbl.setStyleSheet("font-size: 14px; color: #333; font-weight: 500;")
+        value_lbl.setStyleSheet("font-size: 12px; color: #333; font-weight: 500;")
+        value_lbl.setWordWrap(True)
 
         row_layout.addWidget(icon)
         row_layout.addWidget(title_lbl)
-        row_layout.addWidget(value_lbl)
-        row_layout.addStretch()
+        row_layout.addWidget(value_lbl, 1)
 
         return row, value_lbl
 
@@ -533,11 +530,11 @@ class ResultScreen(QWidget):
         icon.setPixmap(qta.icon(icon_name, color="#4F4F4F").pixmap(22, 22))
 
         label = QLabel(f"{title}: {value}")
-        label.setStyleSheet("font-size: 15px; color: #222; font-weight: 500;")
+        label.setStyleSheet("font-size: 12px; color: #222; font-weight: 500;")
+        label.setWordWrap(True)
 
         row_layout.addWidget(icon)
-        row_layout.addWidget(label)
-        row_layout.addStretch()
+        row_layout.addWidget(label, 1)
 
         return row, label
 
@@ -554,12 +551,11 @@ class ResultScreen(QWidget):
         icon.setPixmap(qta.icon("fa5s.exclamation-circle", color=ORANGE).pixmap(18, 18))
 
         label = QLabel(reason)
-        label.setWordWrap(False)
+        label.setWordWrap(True)
         label.setStyleSheet("font-size: 14px; color: #444; font-weight: 500;")
 
         row_layout.addWidget(icon)
-        row_layout.addWidget(label)
-        row_layout.addStretch()
+        row_layout.addWidget(label, 1)
 
         return row
 
@@ -577,60 +573,68 @@ class ResultScreen(QWidget):
         report: str,
         risk_level: str,
         score: float,
-        client_id: str = "-",
-        inputs: dict | None = None,
-        risk_distribution: dict | None = None,
-        predicted_casualties: str = "-",
-        predicted_crash_type: str = "-",
-        predicted_maintenance: str = "-",
-        reasons: list[str] | None = None,
+        client_id: str,
+        inputs: dict,
+        risk_distribution: dict,
+        reasons: list[str],
+        recommendations: list[str],
     ):
         risk_distribution = risk_distribution or {"low": 0.0, "medium": 0.0, "high": 0.0}
-        
+
         self.current_risk_level = risk_level
         self.current_client_id = client_id
         self.current_inputs = inputs or {}
         self.current_reasons = reasons or []
+        self.current_recommendations = recommendations or []
+        self.report_text = report
 
         self.risk_value.setText(risk_level)
         self.risk_value.setStyleSheet(
-            f"font-size: 24px; font-weight: 500; color: {self._risk_color(risk_level)};"
+            f"font-size: 24px; font-weight: 700; color: {self._risk_color(risk_level)};"
         )
 
         self.client_label.setText(f"Client ID: {client_id}")
         self.score_label.setText(f"Evaluation Score: {score:.2f}")
 
-        failure_text = "Yes" if float(self.current_inputs.get("failure_history", 0)) >= 0.5 else "No"
+        if risk_level == "Low Risk":
+            summary = "Current conditions appear manageable for travel."
+            action = "Proceed with normal caution."
+        elif risk_level == "Medium Risk":
+            summary = "There are notable risk factors before travel."
+            action = "Proceed only with extra caution."
+        else:
+            summary = "Current conditions present serious pre-driving risk."
+            action = "Delay or avoid travel until conditions improve."
+
+        self.summary_text.setText(f"Evaluation Summary: {summary}")
+        self.action_text.setText(f"Recommended Action: {action}")
 
         value_map = {
             "driver_age": str(self.current_inputs.get("driver_age", "-")),
-            "driver_experience": str(self.current_inputs.get("driver_experience", "-")),
-            "driver_alcohol": str(self.current_inputs.get("driver_alcohol", "-")),
-            "traffic_density": str(self.current_inputs.get("traffic_density", "-")),
-            "vehicle_age": str(self.current_inputs.get("vehicle_age", "-")),
-            "vehicle_type": str(self.current_inputs.get("vehicle_type", "-")),
-            "failure_history": failure_text,
-            "brake_condition": str(self.current_inputs.get("brake_condition", "-")),
-            "weather": str(self.current_inputs.get("weather", "-")),
-            "lighting": str(self.current_inputs.get("lighting", "-")),
-            "road_condition": str(self.current_inputs.get("road_condition", "-")),
+            "alcohol_consumption": str(self.current_inputs.get("alcohol_consumption", "-")),
+            "driving_experience": str(self.current_inputs.get("driving_experience", "-")),
             "time_of_day": str(self.current_inputs.get("time_of_day", "-")),
+            "expected_trip_duration": str(self.current_inputs.get("expected_trip_duration", "-")),
+            "vehicle_type": str(self.current_inputs.get("vehicle_type", "-")),
+            "vehicle_age": str(self.current_inputs.get("vehicle_age", "-")),
+            "recent_mechanical_issues": str(self.current_inputs.get("recent_mechanical_issues", "-")),
+            "brake_condition": str(self.current_inputs.get("brake_condition", "-")),
+            "last_vehicle_maintenance": str(self.current_inputs.get("last_vehicle_maintenance", "-")),
+            "weather_condition": str(self.current_inputs.get("weather_condition", "-")),
+            "visible_road_issues": str(self.current_inputs.get("visible_road_issues", "-")),
             "road_type": str(self.current_inputs.get("road_type", "-")),
-            "road_defect": str(self.current_inputs.get("road_defect", "-")),
-            "intersection": str(self.current_inputs.get("intersection", "-")),
-            "speed_limit": str(self.current_inputs.get("speed_limit", "-")),
+            "traffic_level": str(self.current_inputs.get("traffic_level", "-")),
+            "road_condition": str(self.current_inputs.get("road_condition", "-")),
+            "intersections_busy_crossings": str(self.current_inputs.get("intersections_busy_crossings", "-")),
         }
 
         for key, lbl in self.input_labels.items():
             lbl.setText(value_map.get(key, "-"))
 
-        self.casualties_text.setText(f"Predicted Number of Casualties: {predicted_casualties}")
-        self.crash_type_text.setText(f"Predicted Crash Type: {predicted_crash_type}")
-        self.maintenance_text.setText(f"Predicted Maintenance Required: {predicted_maintenance}")
-        self.low_distribution.setText(f"Low Risk: {risk_distribution['low']:.2f}%")
-        self.medium_distribution.setText(f"Medium Risk: {risk_distribution['medium']:.2f}%")
-        self.high_distribution.setText(f"High Risk: {risk_distribution['high']:.2f}%")
-        
+        self.low_distribution.setText(f"Low Risk: {risk_distribution.get('low', 0.0):.2f}%")
+        self.medium_distribution.setText(f"Medium Risk: {risk_distribution.get('medium', 0.0):.2f}%")
+        self.high_distribution.setText(f"High Risk: {risk_distribution.get('high', 0.0):.2f}%")
+
         while self.reasons_box.count():
             item = self.reasons_box.takeAt(0)
             widget = item.widget()
@@ -640,37 +644,180 @@ class ResultScreen(QWidget):
         for reason in self.current_reasons:
             self.reasons_box.addWidget(self._make_reason_row(reason))
 
+        self.reasons_box.addStretch()
         self.traffic_light.set_level(risk_level)
 
     def set_decrypted_report(self, report: str):
-        pass
+        self.report_text = report
 
+        parsed = self._parse_report_text(report)
+        if not parsed:
+            return
+
+        risk_level = parsed.get("risk_level", "-")
+        score = parsed.get("score", 0.0)
+        client_id = parsed.get("client_id", "-")
+        inputs = parsed.get("inputs", {})
+        risk_distribution = parsed.get(
+            "risk_distribution",
+            {"low": 0.0, "medium": 0.0, "high": 0.0},
+        )
+        reasons = parsed.get("reasons", [])
+        recommendations = parsed.get("recommendations", [])
+
+        self.set_result(
+            report=report,
+            risk_level=risk_level,
+            score=score,
+            client_id=client_id,
+            inputs=inputs,
+            risk_distribution=risk_distribution,
+            reasons=reasons,
+            recommendations=recommendations,
+        )
+    
+    def _parse_report_text(self, report: str) -> dict | None:
+        try:
+            lines = [line.rstrip() for line in report.splitlines()]
+
+            client_id = "-"
+            score = 0.0
+            risk_level = "-"
+            risk_distribution = {"low": 0.0, "medium": 0.0, "high": 0.0}
+            inputs = {}
+            reasons = []
+            recommendations = []
+
+            section = None
+
+            for raw_line in lines:
+                line = raw_line.strip()
+
+                if not line:
+                    continue
+
+                if line.startswith("Client ID:"):
+                    client_id = line.replace("Client ID:", "", 1).strip()
+                    continue
+
+                if line.startswith("Evaluation Score:"):
+                    score_text = line.replace("Evaluation Score:", "", 1).strip()
+                    try:
+                        score = float(score_text)
+                    except ValueError:
+                        score = 0.0
+                    continue
+
+                if line.startswith("Risk Level:"):
+                    risk_level = line.replace("Risk Level:", "", 1).strip()
+                    continue
+
+                if line == "RISK DISTRIBUTION":
+                    section = "risk_distribution"
+                    continue
+
+                if line == "INPUT SUMMARY":
+                    section = "inputs"
+                    continue
+
+                if line == "REASONS":
+                    section = "reasons"
+                    continue
+
+                if line == "RECOMMENDATIONS":
+                    section = "recommendations"
+                    continue
+
+                if section == "risk_distribution":
+                    if line.startswith("Low Risk:"):
+                        val = line.replace("Low Risk:", "", 1).replace("%", "").strip()
+                        risk_distribution["low"] = float(val) if val else 0.0
+                    elif line.startswith("Medium Risk:"):
+                        val = line.replace("Medium Risk:", "", 1).replace("%", "").strip()
+                        risk_distribution["medium"] = float(val) if val else 0.0
+                    elif line.startswith("High Risk:"):
+                        val = line.replace("High Risk:", "", 1).replace("%", "").strip()
+                        risk_distribution["high"] = float(val) if val else 0.0
+                    continue
+
+                if section == "inputs" and line.startswith("-") is False:
+                    # matches lines like: Driver Age: 45
+                    match = re.match(r"^(.*?):\s*(.*)$", line)
+                    if match:
+                        label = match.group(1).strip()
+                        value = match.group(2).strip()
+                        key = self._label_to_input_key(label)
+                        if key:
+                            inputs[key] = value
+                    continue
+
+                if section == "reasons" and line.startswith("- "):
+                    reasons.append(line[2:].strip())
+                    continue
+
+                if section == "recommendations" and line.startswith("- "):
+                    recommendations.append(line[2:].strip())
+                    continue
+
+            return {
+                "client_id": client_id,
+                "score": score,
+                "risk_level": risk_level,
+                "risk_distribution": risk_distribution,
+                "inputs": inputs,
+                "reasons": reasons,
+                "recommendations": recommendations,
+            }
+
+        except Exception:
+            return None
+    
+    def _label_to_input_key(self, label: str) -> str | None:
+        mapping = {
+            "Driver Age": "driver_age",
+            "Alcohol Consumption": "alcohol_consumption",
+            "Driving Experience": "driving_experience",
+            "Time of Day": "time_of_day",
+            "Expected Trip Duration": "expected_trip_duration",
+            "Vehicle Type": "vehicle_type",
+            "Vehicle Age": "vehicle_age",
+            "Recent Mechanical Issues": "recent_mechanical_issues",
+            "Brake Condition": "brake_condition",
+            "Last Vehicle Maintenance": "last_vehicle_maintenance",
+            "Weather Condition": "weather_condition",
+            "Visible Road Issues": "visible_road_issues",
+            "Road Type": "road_type",
+            "Traffic Level": "traffic_level",
+            "Road Condition": "road_condition",
+            "Intersections / Busy Crossings": "intersections_busy_crossings",
+        }
+        return mapping.get(label)
+    
     def clear_result(self):
         self.current_risk_level = "-"
         self.current_client_id = "-"
         self.current_inputs = {}
         self.current_reasons = []
+        self.current_recommendations = []
+        self.report_text = ""
 
-        self.risk_value.setText("-")
-        self.risk_value.setStyleSheet("font-size: 24px; font-weight: 500; color: #222;")
         self.client_label.setText("Client ID: -")
         self.score_label.setText("Evaluation Score: -")
+        self.risk_value.setText("-")
+        self.risk_value.setStyleSheet("font-size: 24px; font-weight: 500; color: #111;")
+        self.traffic_light.set_level("-")
 
-        for key, lbl in self.input_labels.items():
-            lbl.setText("-")
-
-        self.casualties_text.setText("Predicted Number of Casualties: -")
-        self.crash_type_text.setText("Predicted Crash Type: -")
-        self.maintenance_text.setText("Predicted Maintenance Required: -")
-        
+        self.summary_text.setText("Evaluation Summary: -")
+        self.action_text.setText("Recommended Action: -")
         self.low_distribution.setText("Low Risk: 0.00%")
         self.medium_distribution.setText("Medium Risk: 0.00%")
         self.high_distribution.setText("High Risk: 0.00%")
-        
-        while self.reasons_box.count():
-            item = self.reasons_box.takeAt(0)
-            widget = item.widget()
-            if widget:
-                widget.deleteLater()
 
-        self.traffic_light.set_level("-")
+        for label in self.input_labels.values():
+            label.setText("-")
+
+        while self.reasons_box.count():
+            child = self.reasons_box.takeAt(0)
+            widget = child.widget()
+            if widget is not None:
+                widget.deleteLater()

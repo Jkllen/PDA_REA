@@ -3,7 +3,6 @@ from view.qt.main_window import MainWindow
 from model.auth_model import login, signup
 from model.fuzzy_model import evaluate_fuzzy
 from model.crypto_model import encrypt_report, decrypt_report
-from view.report_view import generate_report
 
 
 class AppController:
@@ -12,12 +11,13 @@ class AppController:
         self.current_client = None
         self.current_report = None
         self.current_encrypted_file = None
+
         self.last_inputs = {}
         self.last_score = 0.0
         self.last_risk_level = "-"
-        self.last_predicted_casualties = "-"
-        self.last_predicted_crash_type = "-"
-        self.last_predicted_maintenance = "-"
+        self.last_risk_distribution = {"low": 0.0, "medium": 0.0, "high": 0.0}
+        self.last_reasons = []
+        self.last_recommendations = []
 
         self.window.login_screen.login_requested.connect(self.handle_login)
         self.window.login_screen.signup_link_clicked.connect(self.show_signup)
@@ -27,16 +27,15 @@ class AppController:
 
         self.window.risk_input_screen.back_to_login_requested.connect(self.logout)
         self.window.risk_input_screen.evaluate_requested.connect(self.handle_evaluate)
-        
-        
+
         self.window.result_screen.back_requested.connect(self.show_risk_input)
         self.window.result_screen.encrypt_requested.connect(self.handle_encrypt)
         self.window.result_screen.decrypt_requested.connect(self.handle_decrypt)
         self.window.result_screen.advisory_requested.connect(self.show_advisory)
+
         self.window.advisory_screen.back_to_result_requested.connect(self.show_result_screen)
         self.window.advisory_screen.new_evaluation_requested.connect(self.show_risk_input)
-        
-        
+
     def show(self):
         self.window.show()
 
@@ -53,8 +52,18 @@ class AppController:
         self.current_client = None
         self.current_report = None
         self.current_encrypted_file = None
-        self.window.risk_input_screen.clear_form()
-        self.window.result_screen.clear_result()
+        self.last_inputs = {}
+        self.last_score = 0.0
+        self.last_risk_level = "-"
+        self.last_risk_distribution = {"low": 0.0, "medium": 0.0, "high": 0.0}
+        self.last_reasons = []
+        self.last_recommendations = []
+
+        if hasattr(self.window.risk_input_screen, "clear_form"):
+            self.window.risk_input_screen.clear_form()
+        if hasattr(self.window.result_screen, "clear_result"):
+            self.window.result_screen.clear_result()
+
         self.window.show_login()
 
     def handle_login(self, client_number: str, password: str):
@@ -64,6 +73,10 @@ class AppController:
 
         if login(client_number, password):
             self.current_client = client_number
+            
+            if hasattr(self.window.risk_input_screen, "clear_form"):
+                self.window.risk_input_screen.clear_form()
+
             self.window.show_risk_input()
             self._show_message("Login Success", "You have successfully logged in.")
         else:
@@ -91,18 +104,15 @@ class AppController:
             return
 
         try:
-            score, risk_level, risk_distribution, predicted_casualties, predicted_crash_type, predicted_maintenance, triggered_reasons, recommendations = evaluate_fuzzy(user_inputs)
+            score, risk_level, risk_distribution, reasons, recommendations = evaluate_fuzzy(user_inputs)
 
-            report = generate_report(
-                client=self.current_client,
+            report = self._build_report_text(
+                client_id=self.current_client,
                 inputs=user_inputs,
                 score=score,
                 risk_level=risk_level,
                 risk_distribution=risk_distribution,
-                predicted_casualties=predicted_casualties,
-                predicted_crash_type=predicted_crash_type,
-                predicted_maintenance=predicted_maintenance,
-                reasons=triggered_reasons,
+                reasons=reasons,
                 recommendations=recommendations,
             )
 
@@ -110,10 +120,10 @@ class AppController:
             self.last_inputs = user_inputs
             self.last_score = score
             self.last_risk_level = risk_level
-            self.last_predicted_casualties = predicted_casualties
-            self.last_predicted_crash_type = predicted_crash_type
-            self.last_predicted_maintenance = predicted_maintenance
-            
+            self.last_risk_distribution = risk_distribution
+            self.last_reasons = reasons
+            self.last_recommendations = recommendations
+
             self.window.result_screen.set_result(
                 report=report,
                 risk_level=risk_level,
@@ -121,10 +131,8 @@ class AppController:
                 client_id=self.current_client,
                 inputs=user_inputs,
                 risk_distribution=risk_distribution,
-                predicted_casualties=predicted_casualties,
-                predicted_crash_type=predicted_crash_type,
-                predicted_maintenance=predicted_maintenance,
-                reasons=triggered_reasons,
+                reasons=reasons,
+                recommendations=recommendations,
             )
             self.window.show_result()
 
@@ -190,15 +198,76 @@ class AppController:
             client_id=self.current_client,
             risk_level=self.last_risk_level,
             score=self.last_score,
-            predicted_casualties=self.last_predicted_casualties,
-            predicted_crash_type=self.last_predicted_crash_type,
-            predicted_maintenance=self.last_predicted_maintenance,
             inputs=self.last_inputs,
+            reasons=self.last_reasons,
+            recommendations=self.last_recommendations,
         )
         self.window.show_advisory()
-        
+
     def show_result_screen(self):
         self.window.show_result()
-        
+
     def _show_message(self, title: str, text: str):
         QMessageBox.information(self.window, title, text)
+
+    def _build_report_text(
+        self,
+        client_id: str,
+        inputs: dict,
+        score: float,
+        risk_level: str,
+        risk_distribution: dict,
+        reasons: list[str],
+        recommendations: list[str],
+    ) -> str:
+        lines = [
+            "PRE-DRIVING RISK EVALUATION REPORT",
+            "=" * 42,
+            f"Client ID: {client_id}",
+            f"Evaluation Score: {score:.2f}",
+            f"Risk Level: {risk_level}",
+            "",
+            "RISK DISTRIBUTION",
+            f"  Low Risk: {risk_distribution.get('low', 0.0):.2f}%",
+            f"  Medium Risk: {risk_distribution.get('medium', 0.0):.2f}%",
+            f"  High Risk: {risk_distribution.get('high', 0.0):.2f}%",
+            "",
+            "INPUT SUMMARY",
+        ]
+
+        label_map = {
+            "driver_age": "Driver Age",
+            "alcohol_consumption": "Alcohol Consumption",
+            "driving_experience": "Driving Experience",
+            "time_of_day": "Time of Day",
+            "expected_trip_duration": "Expected Trip Duration",
+            "vehicle_type": "Vehicle Type",
+            "vehicle_age": "Vehicle Age",
+            "recent_mechanical_issues": "Recent Mechanical Issues",
+            "brake_condition": "Brake Condition",
+            "last_vehicle_maintenance": "Last Vehicle Maintenance",
+            "weather_condition": "Weather Condition",
+            "visible_road_issues": "Visible Road Issues",
+            "road_type": "Road Type",
+            "traffic_level": "Traffic Level",
+            "road_condition": "Road Condition",
+            "intersections_busy_crossings": "Intersections / Busy Crossings",
+        }
+
+        for key, value in inputs.items():
+            label = label_map.get(key, key.replace("_", " ").title())
+            lines.append(f"{label}: {value}")
+
+        lines.extend([
+            "",
+            "REASONS",
+        ])
+        lines.extend([f"- {reason}" for reason in reasons])
+
+        lines.extend([
+            "",
+            "RECOMMENDATIONS",
+        ])
+        lines.extend([f"  - {item}" for item in recommendations])
+
+        return "\n".join(lines)
