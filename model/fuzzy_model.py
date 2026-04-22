@@ -90,6 +90,7 @@ risk["high"] = fuzz.trapmf(risk.universe, [0.62, 0.78, 1.0, 1.0])
 # =========================================================
 rules = [
     # Safer baseline
+    # Rule 1
     ctrl.Rule(
         alcohol_risk["low"]
         & experience_risk["low"]
@@ -100,15 +101,17 @@ rules = [
         & mechanical_risk["low"]
         & maintenance_risk["low"],
         risk["low"],
-    ),
+    ), #rule1
 
     # Alcohol-related rules
-    ctrl.Rule(alcohol_risk["high"], risk["high"]),
+    # Rule 2-5
+    ctrl.Rule(alcohol_risk["high"], risk["high"]), #rule2
     ctrl.Rule(alcohol_risk["medium"] & time_risk["high"], risk["high"]),
     ctrl.Rule(alcohol_risk["medium"] & trip_duration_risk["high"], risk["high"]),
     ctrl.Rule(alcohol_risk["medium"], risk["medium"]),
 
     # Experience and age
+    # Rule 6-11
     ctrl.Rule(experience_risk["high"] & time_risk["high"], risk["high"]),
     ctrl.Rule(experience_risk["high"] & traffic_risk["high"], risk["high"]),
     ctrl.Rule(experience_risk["high"] & road_type_risk["high"], risk["high"]),
@@ -117,12 +120,14 @@ rules = [
     ctrl.Rule(driver_age["senior"] & traffic_risk["high"] & intersection_risk["high"], risk["high"]),
 
     # Time and trip exposure
+    # Rule 12-15
     ctrl.Rule(time_risk["high"] & trip_duration_risk["high"], risk["high"]),
     ctrl.Rule(time_risk["medium"] & trip_duration_risk["high"], risk["medium"]),
     ctrl.Rule(trip_duration_risk["high"] & traffic_risk["high"], risk["high"]),
     ctrl.Rule(trip_duration_risk["high"] & experience_risk["high"], risk["high"]),
 
     # Weather / environment
+    # Rule 16-29
     ctrl.Rule(weather_risk["high"] & road_condition_risk["high"], risk["high"]),
     ctrl.Rule(weather_risk["high"] & road_issue_risk["high"], risk["high"]),
     ctrl.Rule(weather_risk["high"] & traffic_risk["high"], risk["high"]),
@@ -139,6 +144,7 @@ rules = [
     ctrl.Rule(intersection_risk["high"] & time_risk["high"], risk["high"]),
 
     # Vehicle-related rules
+    # Rule 30-38
     ctrl.Rule(brake_risk["high"], risk["high"]),
     ctrl.Rule(mechanical_risk["high"], risk["high"]),
     ctrl.Rule(maintenance_risk["high"] & brake_risk["medium"], risk["high"]),
@@ -150,6 +156,7 @@ rules = [
     ctrl.Rule(vehicle_type_risk["medium"] & traffic_risk["high"], risk["medium"]),
 
     # Mixed moderate-risk combinations
+    # Rule 39-43
     ctrl.Rule(brake_risk["medium"] & weather_risk["medium"], risk["medium"]),
     ctrl.Rule(mechanical_risk["medium"] & traffic_risk["medium"], risk["medium"]),
     ctrl.Rule(maintenance_risk["medium"] & vehicle_age_risk["medium"], risk["medium"]),
