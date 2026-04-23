@@ -245,11 +245,13 @@ system = ctrl.ControlSystem(rules)
 # HELPERS
 # =========================================================
 def classify_risk(score: float) -> str:
-    if score < 0.40:
-        return "Low Risk"
-    if score < 0.68:
-        return "Medium Risk"
-    return "High Risk"
+    dist = get_risk_distribution(score)
+    priority = ["low", "medium", "high"]
+    max_val = max(dist.values())
+    for label in priority:
+        if dist.get(label, 0.0) == max_val:
+            return f"{label} Risk".title()
+    return "If this prints there is an error"  # fallback (shouldn't be reached)
 
 
 def get_risk_distribution(score: float) -> dict:
