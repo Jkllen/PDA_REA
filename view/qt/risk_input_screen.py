@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QPushButton
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget, QMessageBox
+from PyQt6.QtCore import pyqtSignal
 
 from view.qt.ui_parts import CardFrame
 from view.qt.onboarding_screen import OnboardingScreen
@@ -30,11 +30,11 @@ class RiskInputScreen(QWidget):
     def _build_ui(self):
         self.card = CardFrame(self)
         outer = QVBoxLayout(self.card)
-        outer.setContentsMargins(28, 20, 28, 24)
-        outer.setSpacing(12)
+        outer.setContentsMargins(28, 28, 28, 24)
+        outer.setSpacing(0)
 
         self.stack = QStackedWidget()
-        outer.addWidget(self.stack, 1)
+        outer.addWidget(self.stack)
 
         self.onboarding_screen = OnboardingScreen(self)
         self.driver_trip_screen = DriverTripScreen(self)
@@ -47,15 +47,16 @@ class RiskInputScreen(QWidget):
         self.stack.addWidget(self.vehicle_screen)
 
         self.onboarding_screen.proceed_requested.connect(self.show_driver_trip)
-        self.driver_trip_screen.next_requested.connect(self.show_environment)
+
+        self.driver_trip_screen.next_requested.connect(self._go_to_environment_if_valid)
+        self.driver_trip_screen.logout_requested.connect(self.back_to_login_requested.emit)
+
         self.environment_screen.back_requested.connect(self.show_driver_trip)
-        self.environment_screen.next_requested.connect(self.show_vehicle)
+        self.environment_screen.next_requested.connect(self._go_to_vehicle_if_valid)
+        self.environment_screen.logout_requested.connect(self.back_to_login_requested.emit)
+
         self.vehicle_screen.back_requested.connect(self.show_environment)
         self.vehicle_screen.evaluate_requested.connect(self._emit_data)
-        
-        self.onboarding_screen.logout_requested.connect(self.back_to_login_requested.emit)
-        self.driver_trip_screen.logout_requested.connect(self.back_to_login_requested.emit)
-        self.environment_screen.logout_requested.connect(self.back_to_login_requested.emit)
         self.vehicle_screen.logout_requested.connect(self.back_to_login_requested.emit)
 
     def _set_header(self, title: str, subtitle: str):
@@ -79,12 +80,107 @@ class RiskInputScreen(QWidget):
         self.stack.setCurrentWidget(self.vehicle_screen)
         self._set_header("PRE-DRIVING EVALUATION", "COMPLETE ALL FIELDS TO ASSESS COMPREHENSIVE DRIVING RISK")
 
+    def start_new_evaluation(self):
+        self.driver_trip_screen.reset()
+        self.environment_screen.reset()
+        self.vehicle_screen.reset()
+        self.stack.setCurrentWidget(self.driver_trip_screen)
+        self.update()
+        self.repaint()
+
+    def _warn(self, message: str):
+        QMessageBox.warning(self, "Incomplete Input", message)
+
+    def _go_to_environment_if_valid(self):
+        age_text = self.driver_trip_screen.driver_age.text().strip()
+
+        if not age_text:
+            self._warn("Please enter your age before proceeding.")
+            return
+
+        if not age_text.isdigit():
+            self._warn("Please enter a valid numeric age.")
+            return
+
+        age = int(age_text)
+        if age < 18 or age > 70:
+            self._warn("Driver age must be between 18 and 70.")
+            return
+
+        if self.driver_trip_screen.driver_alcohol.currentIndex() == 0:
+            self._warn("Please select your alcohol consumption before proceeding.")
+            return
+
+        if self.driver_trip_screen.driver_experience.currentIndex() == 0:
+            self._warn("Please select your driving experience before proceeding.")
+            return
+
+        if self.driver_trip_screen.time_of_day.currentIndex() == 0:
+            self._warn("Please select your time of day before proceeding.")
+            return
+
+        if self.driver_trip_screen.trip_duration.currentIndex() == 0:
+            self._warn("Please select your expected trip duration before proceeding.")
+            return
+
+        self.show_environment()
+
+    def _go_to_vehicle_if_valid(self):
+        if self.environment_screen.weather.currentIndex() == 0:
+            self._warn("Please select the current weather condition before proceeding.")
+            return
+
+        if self.environment_screen.road_type.currentIndex() == 0:
+            self._warn("Please select the road type before proceeding.")
+            return
+
+        if self.environment_screen.road_condition.currentIndex() == 0:
+            self._warn("Please select the road condition before proceeding.")
+            return
+
+        if self.environment_screen.road_defect.currentIndex() == 0:
+            self._warn("Please select the visible road issues before proceeding.")
+            return
+
+        if self.environment_screen.traffic_density.currentIndex() == 0:
+            self._warn("Please select the traffic level before proceeding.")
+            return
+
+        if self.environment_screen.intersection_related.currentIndex() == 0:
+            self._warn("Please select the intersections / busy crossings field before proceeding.")
+            return
+
+        self.show_vehicle()
+
     def _emit_data(self):
         age_text = self.driver_trip_screen.driver_age.text().strip()
-        driver_age = int(age_text) if age_text.isdigit() else 18
+
+        if not age_text or not age_text.isdigit():
+            self._warn("Please enter a valid driver age before running the assessment.")
+            return
+
+        if self.vehicle_screen.vehicle_type.currentIndex() == 0:
+            self._warn("Please select the vehicle type before running the assessment.")
+            return
+
+        if self.vehicle_screen.failure_history.currentIndex() == 0:
+            self._warn("Please select recent mechanical issues before running the assessment.")
+            return
+
+        if self.vehicle_screen.vehicle_age.currentIndex() == 0:
+            self._warn("Please select the vehicle age before running the assessment.")
+            return
+
+        if self.vehicle_screen.brake_condition.currentIndex() == 0:
+            self._warn("Please select the brake condition before running the assessment.")
+            return
+
+        if self.vehicle_screen.maintenance_recency.currentIndex() == 0:
+            self._warn("Please select the last vehicle maintenance before running the assessment.")
+            return
 
         payload = {
-            "driver_age": driver_age,
+            "driver_age": int(age_text),
             "alcohol_consumption": self.driver_trip_screen.driver_alcohol.currentText().strip().lower(),
             "driving_experience": self.driver_trip_screen.driver_experience.currentText().strip().lower(),
             "time_of_day": self.driver_trip_screen.time_of_day.currentText().strip().lower(),

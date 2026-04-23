@@ -206,13 +206,32 @@ class OnboardingScreen(QWidget):
         return btn
 
     def _handle_start(self):
-        if not all(box.isChecked() for box in self.awareness_checks):
+        items = [
+            ("your physical and mental condition", self.awareness_checks[0]),
+            ("your driving behavior and habits", self.awareness_checks[1]),
+            ("your vehicle condition", self.awareness_checks[2]),
+            ("your route and environment", self.awareness_checks[3]),
+            ("your legal responsibility as a driver", self.awareness_checks[4]),
+        ]
+
+        unchecked = [label for label, box in items if not box.isChecked()]
+
+        if unchecked:
+            if len(unchecked) == 1:
+                missing_text = unchecked[0]
+            elif len(unchecked) == 2:
+                missing_text = f"{unchecked[0]} and {unchecked[1]}"
+            else:
+                missing_text = ", ".join(unchecked[:-1]) + f", and {unchecked[-1]}"
+
             QMessageBox.warning(
                 self,
                 "Confirmation Required",
-                "Please confirm that you are aware of your driving behavior, responsible driving behavior is expected under Republic Act No. 4136",
+                f"Please confirm that you are aware of {missing_text}. "
+                "Responsible driving behavior is expected under Republic Act No. 4136.",
             )
             return
+
         self.proceed_requested.emit()
 
     def reset(self):
