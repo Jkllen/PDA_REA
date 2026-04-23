@@ -47,7 +47,6 @@ weather_map = {
 visible_road_issues_map = {
     "none": 0.10,
     "potholes / uneven road": 0.55,
-    "flooding": 0.90,
     "road construction": 0.65,
     "accidents / obstructions": 0.80,
     "poor lighting": 0.60,
