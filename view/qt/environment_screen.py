@@ -18,7 +18,10 @@ class EnvironmentScreen(QWidget):
         page_layout.setContentsMargins(0, 0, 0, 0)
         page_layout.setSpacing(14)
 
-        section = self._wide_section_card("WEATHER, ROAD, & ENVIRONMENT CONDITION")
+        section = self._wide_section_card(
+            "WEATHER, ROAD, & ENVIRONMENT CONDITION",
+            "Weather, road, and environment condition are also important, check updates using weather applications and navigation apps before driving."
+            )
         section_layout = section.layout()
 
         form_row = QHBoxLayout()
@@ -135,7 +138,7 @@ class EnvironmentScreen(QWidget):
 
         page_layout.addLayout(button_row)
 
-    def _wide_section_card(self, title: str) -> CardFrame:
+    def _wide_section_card(self, title: str, subtitle: str) -> CardFrame:
         card = CardFrame()
         layout = QVBoxLayout(card)
         layout.setContentsMargins(36, 20, 36, 22)
@@ -161,7 +164,16 @@ class EnvironmentScreen(QWidget):
 
         layout.addSpacing(4)
         layout.addLayout(header_row)
-        layout.addSpacing(2)
+        
+        subtitle_lbl = QLabel(subtitle)
+        subtitle_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitle_lbl.setWordWrap(True)
+        subtitle_lbl.setStyleSheet("""
+            font-size: 14px;
+            color: #3F8A2E;
+            padding-bottom: 2px;
+        """)
+        layout.addWidget(subtitle_lbl)
 
         return card
 

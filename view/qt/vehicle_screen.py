@@ -19,7 +19,10 @@ class VehicleScreen(QWidget):
         page_layout.setContentsMargins(0, 0, 0, 0)
         page_layout.setSpacing(18)
 
-        section = self._wide_section_card("VEHICLE CONDITION")
+        section = self._wide_section_card(
+            "VEHICLE CONDITION",
+            "Vehicle condition is also important, check your vehicle before you start."
+            )
         section_layout = section.layout()
         form_row = QHBoxLayout()
         form_row.setSpacing(25)
@@ -116,7 +119,7 @@ class VehicleScreen(QWidget):
 
         page_layout.addLayout(button_row)
 
-    def _wide_section_card(self, title: str) -> CardFrame:
+    def _wide_section_card(self, title: str, subtitle: str) -> CardFrame:
         card = CardFrame()
         layout = QVBoxLayout(card)
         layout.setContentsMargins(36, 20, 36, 22)
@@ -135,10 +138,19 @@ class VehicleScreen(QWidget):
 
         header_row.addWidget(icon_vehicle)
         header_row.addWidget(header)
-
+ 
         layout.addSpacing(4)
         layout.addLayout(header_row)
-        layout.addSpacing(2)
+        
+        subtitle_lbl = QLabel(subtitle)
+        subtitle_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitle_lbl.setWordWrap(True)
+        subtitle_lbl.setStyleSheet("""
+            font-size: 14px;
+            color: #3F8A2E;
+            padding-bottom: 2px;
+        """)
+        layout.addWidget(subtitle_lbl)
 
         return card
 

@@ -26,7 +26,7 @@ class DriverTripScreen(QWidget):
         content_row = QHBoxLayout()
         content_row.setSpacing(28)
 
-        driver_card = self._section_card("DRIVER CONDITION", "fa6s.person-rays")
+        driver_card = self._section_card("DRIVER CONDITION", "fa6s.person-rays", "Before you start driving, check yourself first.")
         driver_layout = driver_card.layout()
 
         self.driver_age = self._line_field(
@@ -63,9 +63,9 @@ class DriverTripScreen(QWidget):
 
         driver_layout.addStretch()
 
-        trip_card = self._section_card("TRIP & TIME CONDITIONS", "fa5s.clock")
+        trip_card = self._section_card("TRIP & TIME CONDITIONS", "fa5s.clock", "Plan and check your trip and time conditions.")
         trip_layout = trip_card.layout()
-
+ 
         self.time_of_day = self._combo_field(
             trip_layout,
             "What time of day are you planning to drive?",
@@ -114,7 +114,7 @@ class DriverTripScreen(QWidget):
 
         page_layout.addLayout(button_row)
 
-    def _section_card(self, title: str, icon_name: str) -> CardFrame:
+    def _section_card(self, title: str, icon_name: str, subtitle: str) -> CardFrame:
         card = CardFrame()
         layout = QVBoxLayout(card)
         layout.setContentsMargins(28, 20, 28, 22)
@@ -140,6 +140,17 @@ class DriverTripScreen(QWidget):
 
         layout.addLayout(header_row)
 
+        
+        subtitle_lbl = QLabel(subtitle)
+        subtitle_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitle_lbl.setWordWrap(True)
+        subtitle_lbl.setStyleSheet("""
+            font-size: 14px;
+            color: #3F8A2E;
+            padding-bottom: 2px;
+        """)
+        layout.addWidget(subtitle_lbl)
+        
         return card
 
     def _field_shell(self, label_text: str):
