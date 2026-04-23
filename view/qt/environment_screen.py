@@ -127,8 +127,8 @@ class EnvironmentScreen(QWidget):
         back_btn.setMinimumWidth(115)
         back_btn.clicked.connect(self.back_requested.emit)
 
-        next_btn = self._green_button("Next")
-        next_btn.setMinimumWidth(115)
+        next_btn = self._green_button("RUN SAFETY ASSESSMENT")
+        next_btn.setMinimumWidth(320)
         next_btn.clicked.connect(self.next_requested.emit)
 
         button_row.addWidget(logout_btn)

@@ -108,8 +108,8 @@ class VehicleScreen(QWidget):
         back_btn.setMinimumWidth(115)
         back_btn.clicked.connect(self.back_requested.emit)
 
-        run_btn = self._green_button("RUN SAFETY ASSESSMENT")
-        run_btn.setMinimumWidth(320)
+        run_btn = self._green_button("Next")
+        run_btn.setMinimumWidth(115)
         run_btn.clicked.connect(self.evaluate_requested.emit)
 
         button_row.addWidget(logout_btn)
