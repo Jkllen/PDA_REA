@@ -43,7 +43,6 @@ class DriverTripScreen(QWidget):
                 "1 drink (light)",
                 "2-3 drinks (moderate)",
                 "More than 3 drinks (high)",
-                "Prefer not to say",
             ],
             placeholder="Select",
         )

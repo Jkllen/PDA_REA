@@ -8,7 +8,6 @@ alcohol_map = {
     "1 drink (light)": 0.35,
     "2-3 drinks (moderate)": 0.70,
     "more than 3 drinks (high)": 1.00,
-    "prefer not to say": 0.75,
 }
 
 driving_experience_map = {

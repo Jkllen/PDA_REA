@@ -45,7 +45,7 @@ class VehicleScreen(QWidget):
         )
         self.vehicle_age = self._combo_field(
             left,
-            "How old is your vehicle (months/years)?",
+            "How old is your vehicle?",
             [
                 "Less than 1 year",
                 "1-3 years",
