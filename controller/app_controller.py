@@ -158,7 +158,7 @@ class AppController:
             self._show_message("No Report", "Please generate a report first.")
             return
 
-        key, ok = QInputDialog.getText(self.window, "Encrypt Report", "Enter encryption key:")
+        key, ok = QInputDialog.getText(self.window, "Download Report", "Enter encryption key to download:")
         if not ok or not key.strip():
             return
 

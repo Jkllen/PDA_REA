@@ -401,7 +401,7 @@ class ResultScreen(QWidget):
         left_buttons.setSpacing(18)
 
         self.back_button = QPushButton(qta.icon("fa5s.arrow-left", color="white"), " Back")
-        self.encrypt_button = QPushButton(qta.icon("fa5s.lock", color="white"), " Encrypt")
+        self.encrypt_button = QPushButton(qta.icon("fa5s.lock", color="white"), " Download")
         self.decrypt_button = QPushButton(qta.icon("fa5s.unlock", color="white"), " Decrypt")
 
         self.back_button.clicked.connect(self.back_requested.emit)
