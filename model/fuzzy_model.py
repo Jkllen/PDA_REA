@@ -61,8 +61,11 @@ driver_age["young"] = fuzz.trapmf(driver_age.universe, [18, 18, 25, 35])
 driver_age["middle"] = fuzz.trapmf(driver_age.universe, [28, 35, 55, 62])
 driver_age["senior"] = fuzz.trapmf(driver_age.universe, [55, 62, 70, 70])
 
+alcohol_risk["low"] = fuzz.trapmf(alcohol_risk.universe,[0.0, 0.0, 0.25, 0.35])
+alcohol_risk["medium"] = fuzz.trapmf(alcohol_risk.universe, [0.28, 0.40, 0.50, 0.75])
+alcohol_risk["high"] = fuzz.trapmf(alcohol_risk.universe, [0.38, 0.60, 1.0, 1.0])
+
 for variable in (
-    alcohol_risk,
     experience_risk,
     time_risk,
     trip_duration_risk,
@@ -90,85 +93,149 @@ risk["high"] = fuzz.trapmf(risk.universe, [0.62, 0.78, 1.0, 1.0])
 # =========================================================
 rules = [
     # Safer baseline
-    ctrl.Rule(
-        alcohol_risk["low"]
-        & experience_risk["low"]
-        & weather_risk["low"]
-        & road_condition_risk["low"]
-        & traffic_risk["low"]
-        & brake_risk["low"]
-        & mechanical_risk["low"]
-        & maintenance_risk["low"],
-        risk["low"],
-    ),
+    # Rule 0 
+    # ctrl.Rule(
+    #     alcohol_risk["low"]
+    #     & experience_risk["low"]
+    #     & weather_risk["low"]
+    #     & road_condition_risk["low"]
+    #     & traffic_risk["low"]
+    #     & brake_risk["low"]
+    #     & mechanical_risk["low"]
+    #     & maintenance_risk["low"],
+    #     risk["low"],
+    # ), # DEAD RULE
 
     # Alcohol-related rules
-    ctrl.Rule(alcohol_risk["high"], risk["high"]),
-    ctrl.Rule(alcohol_risk["medium"] & time_risk["high"], risk["high"]),
-    ctrl.Rule(alcohol_risk["medium"] & trip_duration_risk["high"], risk["high"]),
-    ctrl.Rule(alcohol_risk["medium"], risk["medium"]),
+    # Rule 0-2
+    ctrl.Rule(alcohol_risk["high"], risk["high"] % 1.0),
+    ctrl.Rule(alcohol_risk["medium"] & (time_risk["high"] | trip_duration_risk["high"]), risk["high"] %0.8),
+    ctrl.Rule(alcohol_risk["medium"], risk["medium"]% 0.8),
 
     # Experience and age
-    ctrl.Rule(experience_risk["high"] & time_risk["high"], risk["high"]),
-    ctrl.Rule(experience_risk["high"] & traffic_risk["high"], risk["high"]),
-    ctrl.Rule(experience_risk["high"] & road_type_risk["high"], risk["high"]),
-    ctrl.Rule(driver_age["young"] & experience_risk["high"], risk["high"]),
-    ctrl.Rule(driver_age["senior"] & weather_risk["high"], risk["medium"]),
-    ctrl.Rule(driver_age["senior"] & traffic_risk["high"] & intersection_risk["high"], risk["high"]),
+    # Rule 3-5
+    ctrl.Rule(driver_age["young"] & experience_risk["high"], risk["high"]% 0.4),
+    ctrl.Rule(driver_age["senior"] & (weather_risk["high"] | traffic_risk["high"]), risk["high"] % 0.4),
+    ctrl.Rule(
+        experience_risk["high"]
+        & (traffic_risk["high"] | weather_risk["high"] | time_risk["high"]),
+        risk["high"] % 0.4
+    ),
+
+    ctrl.Rule(
+        experience_risk["high"]
+        & trip_duration_risk["high"],
+        risk["high"] % 0.4,
+    ),
 
     # Time and trip exposure
-    ctrl.Rule(time_risk["high"] & trip_duration_risk["high"], risk["high"]),
-    ctrl.Rule(time_risk["medium"] & trip_duration_risk["high"], risk["medium"]),
-    ctrl.Rule(trip_duration_risk["high"] & traffic_risk["high"], risk["high"]),
-    ctrl.Rule(trip_duration_risk["high"] & experience_risk["high"], risk["high"]),
+    # Rule 6-7  >:(
+    ctrl.Rule(
+        trip_duration_risk["high"]
+        & (time_risk["high"] | traffic_risk["high"]),
+        risk["high"] % 0.4,
+    ),
+
+    ctrl.Rule(
+        trip_duration_risk["high"]
+        & weather_risk["medium"],
+        risk["high"] % 0.4,
+    ),
 
     # Weather / environment
-    ctrl.Rule(weather_risk["high"] & road_condition_risk["high"], risk["high"]),
-    ctrl.Rule(weather_risk["high"] & road_issue_risk["high"], risk["high"]),
-    ctrl.Rule(weather_risk["high"] & traffic_risk["high"], risk["high"]),
-    ctrl.Rule(weather_risk["medium"] & road_condition_risk["medium"], risk["medium"]),
-    ctrl.Rule(road_issue_risk["high"] & road_condition_risk["high"], risk["high"]),
-    ctrl.Rule(road_issue_risk["high"] & traffic_risk["high"], risk["high"]),
-    ctrl.Rule(road_issue_risk["medium"] & road_condition_risk["medium"], risk["medium"]),
-    ctrl.Rule(road_type_risk["high"] & weather_risk["high"], risk["high"]),
-    ctrl.Rule(road_type_risk["high"] & traffic_risk["medium"], risk["medium"]),
-    ctrl.Rule(traffic_risk["high"] & intersection_risk["high"], risk["high"]),
-    ctrl.Rule(traffic_risk["medium"] & intersection_risk["medium"], risk["medium"]),
-    ctrl.Rule(road_condition_risk["high"], risk["high"]),
-    ctrl.Rule(road_condition_risk["medium"] & traffic_risk["medium"], risk["medium"]),
-    ctrl.Rule(intersection_risk["high"] & time_risk["high"], risk["high"]),
+    # Rule 8-10
+    ctrl.Rule(
+        weather_risk["high"]
+        & (road_condition_risk["high"] | road_issue_risk["high"]),
+        risk["high"] % 0.4,
+    ),
+
+    ctrl.Rule(
+        traffic_risk["high"]
+        & (intersection_risk["high"] | road_condition_risk["high"]),
+        risk["high"] % 0.4,
+    ),
+
+    ctrl.Rule(
+        road_issue_risk["high"]
+        & road_condition_risk["high"],
+        risk["high"] % 0.4,
+    ),
 
     # Vehicle-related rules
-    ctrl.Rule(brake_risk["high"], risk["high"]),
-    ctrl.Rule(mechanical_risk["high"], risk["high"]),
-    ctrl.Rule(maintenance_risk["high"] & brake_risk["medium"], risk["high"]),
-    ctrl.Rule(maintenance_risk["high"] & mechanical_risk["medium"], risk["high"]),
-    ctrl.Rule(vehicle_age_risk["high"] & maintenance_risk["high"], risk["high"]),
-    ctrl.Rule(vehicle_age_risk["high"] & brake_risk["medium"], risk["medium"]),
-    ctrl.Rule(vehicle_type_risk["high"] & weather_risk["high"], risk["high"]),
-    ctrl.Rule(vehicle_type_risk["high"] & road_condition_risk["high"], risk["high"]),
-    ctrl.Rule(vehicle_type_risk["medium"] & traffic_risk["high"], risk["medium"]),
+    # Rule 11-16
+    ctrl.Rule(brake_risk["high"], risk["high"] % 0.9),
+
+    ctrl.Rule(
+        mechanical_risk["high"]
+        | maintenance_risk["high"],
+        risk["high"] % 0.4,
+    ),
+
+    ctrl.Rule(
+        vehicle_age_risk["high"]
+        & maintenance_risk["medium"],
+        risk["high"] % 0.4,
+    ),
+
+    ctrl.Rule(
+        vehicle_type_risk["high"]
+        & (weather_risk["medium"] | road_condition_risk["medium"]),
+        risk["high"] % 0.4,
+    ),
+
+    ctrl.Rule(
+        mechanical_risk["medium"]
+        & brake_risk["medium"],
+        risk["high"] % 0.4,
+    ),
+
+    ctrl.Rule(
+        road_issue_risk["medium"]
+        & intersection_risk["medium"]
+        & traffic_risk["medium"],
+        risk["medium"] % 0.4,
+    ),
 
     # Mixed moderate-risk combinations
-    ctrl.Rule(brake_risk["medium"] & weather_risk["medium"], risk["medium"]),
-    ctrl.Rule(mechanical_risk["medium"] & traffic_risk["medium"], risk["medium"]),
-    ctrl.Rule(maintenance_risk["medium"] & vehicle_age_risk["medium"], risk["medium"]),
-    ctrl.Rule(experience_risk["medium"] & trip_duration_risk["medium"], risk["medium"]),
-    ctrl.Rule(weather_risk["medium"] & traffic_risk["medium"], risk["medium"]),
+    # Rule 17-18
+    ctrl.Rule(
+        experience_risk["medium"]
+        & weather_risk["medium"]
+        & traffic_risk["medium"],
+        risk["medium"] % 0.4,
+    ),
+
+    ctrl.Rule(
+        brake_risk["medium"]
+        & road_condition_risk["medium"]
+        & weather_risk["medium"],
+        risk["medium"] % 0.4,
+    ),
 
     # Strong low-risk combinations
+    # Rule 19-20
     ctrl.Rule(
-        weather_risk["low"]
-        & road_condition_risk["low"]
-        & road_issue_risk["low"]
-        & traffic_risk["low"]
-        & brake_risk["low"]
-        & mechanical_risk["low"]
-        & maintenance_risk["low"]
-        & alcohol_risk["low"]
-        & experience_risk["low"],
-        risk["low"],
+        alcohol_risk["low"]
+        & weather_risk["low"]
+        & traffic_risk["low"],
+        risk["low"] % 0.4,
     ),
+
+    ctrl.Rule(
+        brake_risk["low"]
+        & mechanical_risk["low"]
+        & maintenance_risk["low"],
+        risk["low"] % 0.4,
+    ),
+    
+    # Extra roadtype risk rule
+    # Rule 21
+    ctrl.Rule(
+        road_type_risk["high"]
+        & (weather_risk["medium"] | road_condition_risk["medium"]),
+        risk["high"] % 0.4,
+    )
 ]
 
 system = ctrl.ControlSystem(rules)
