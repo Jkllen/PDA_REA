@@ -157,6 +157,7 @@ class RiskInputScreen(QWidget):
             self._warn("Please enter a valid driver age before running the assessment.")
             return
 
+        # vehicle validation
         if self.vehicle_screen.vehicle_type.currentIndex() == 0:
             self._warn("Please select the vehicle type before running the assessment.")
             return
@@ -175,6 +176,31 @@ class RiskInputScreen(QWidget):
 
         if self.vehicle_screen.maintenance_recency.currentIndex() == 0:
             self._warn("Please select the last vehicle maintenance before running the assessment.")
+            return
+
+        # environment validation
+        if self.environment_screen.weather.currentIndex() == 0:
+            self._warn("Please select the current weather condition before running the assessment.")
+            return
+
+        if self.environment_screen.road_type.currentIndex() == 0:
+            self._warn("Please select the road type before running the assessment.")
+            return
+
+        if self.environment_screen.road_condition.currentIndex() == 0:
+            self._warn("Please select the road condition before running the assessment.")
+            return
+
+        if self.environment_screen.road_defect.currentIndex() == 0:
+            self._warn("Please select the visible road issues before running the assessment.")
+            return
+
+        if self.environment_screen.traffic_density.currentIndex() == 0:
+            self._warn("Please select the traffic level before running the assessment.")
+            return
+
+        if self.environment_screen.intersection_related.currentIndex() == 0:
+            self._warn("Please select the intersections / busy crossings field before running the assessment.")
             return
 
         payload = {
