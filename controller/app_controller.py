@@ -146,7 +146,6 @@ class AppController:
             self._show_message("Evaluation Error", f"Failed to evaluate risk.\n\n{error}")
 
     def start_new_evaluation(self):
-        print("APP CONTROLLER: start_new_evaluation called")
         if hasattr(self.window.result_screen, "clear_result"):
             self.window.result_screen.clear_result()
 
