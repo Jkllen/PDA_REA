@@ -12,9 +12,9 @@ alcohol_map = {
 }
 
 driving_experience_map = {
-    "less than 1 year": 0.95,
-    "1-3 years": 0.75,
-    "4-6 years": 0.50,
+    "less than 1 year": 0.65,
+    "1-3 years": 0.55,
+    "4-6 years": 0.30,
     "7-10 years": 0.25,
     "more than 10 years": 0.10,
 }
