@@ -47,7 +47,8 @@ class RiskInputScreen(QWidget):
         self.stack.addWidget(self.vehicle_screen)
 
         self.onboarding_screen.proceed_requested.connect(self.show_driver_trip)
-
+        self.onboarding_screen.logout_requested.connect(self.back_to_login_requested.emit)
+        
         self.driver_trip_screen.next_requested.connect(self._go_to_vehicle_if_valid)
         self.driver_trip_screen.logout_requested.connect(self.back_to_login_requested.emit)
 
