@@ -37,7 +37,7 @@ class EnvironmentScreen(QWidget):
 
         self.weather = self._combo_field(
             left,
-            "What is the current weather condition in your area?",
+            "What is the expected weather condition based on forecast?",
             [
                 "Clear / Sunny",
                 "Cloudy / Overcast",
