@@ -59,6 +59,7 @@ class OnboardingScreen(QWidget):
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setStyleSheet(
             """
@@ -75,10 +76,10 @@ class OnboardingScreen(QWidget):
         )
         scroll.setFixedHeight(320)
 
-        body = QWidget()
-        body_layout = QVBoxLayout(body)
-        body_layout.setContentsMargins(0,0,0,0)
-        body_layout.setSpacing(12)
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_layout.setSpacing(12)
 
         acknowledgement_items = [
             (
@@ -140,26 +141,29 @@ class OnboardingScreen(QWidget):
             item_layout.addWidget(checkbox, 0, Qt.AlignmentFlag.AlignTop)
             item_layout.addLayout(text_col, 1)
 
-            body_layout.addWidget(item_row)
+            scroll_layout.addWidget(item_row)
 
-        body_layout.addStretch()
-        scroll.setWidget(body)
+        scroll_layout.addStretch()
+        scroll.setWidget(scroll_content)
         panel_layout.addWidget(scroll)
+
         layout.addWidget(panel)
         layout.addStretch()
 
         button_row = QHBoxLayout()
+
         logout_btn = self._dark_button("Logout")
         logout_btn.setMinimumWidth(115)
         logout_btn.clicked.connect(self._confirm_logout)
-    
+
         self.start_button = self._green_button("START THE EVALUATION")
-        
         self.start_button.setMinimumWidth(360)
         self.start_button.clicked.connect(self._handle_start)
+
         button_row.addWidget(logout_btn)
         button_row.addStretch()
         button_row.addWidget(self.start_button)
+
         layout.addLayout(button_row)
 
     def _dark_button(self, text: str) -> QPushButton:
