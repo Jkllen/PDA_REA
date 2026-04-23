@@ -104,15 +104,13 @@ rules = [
     # ), # DEAD RULE
 
     # Alcohol-related rules
-    # Rule 1-4
-    # Alcohol dominates everything
+    # Rule 0-2
     ctrl.Rule(alcohol_risk["high"], risk["high"]),
     ctrl.Rule(alcohol_risk["medium"] & (time_risk["high"] | trip_duration_risk["high"]), risk["high"]),
     ctrl.Rule(alcohol_risk["medium"], risk["medium"]),
 
     # Experience and age
-    # Rule 5-10
-    ctrl.Rule(experience_risk["high"] & (traffic_risk["high"] | time_risk["high"]), risk["high"]),
+    # Rule 3-5
     ctrl.Rule(driver_age["young"] & experience_risk["high"], risk["high"]),
     ctrl.Rule(driver_age["senior"] & (weather_risk["high"] | traffic_risk["high"]), risk["high"]),
     ctrl.Rule(
@@ -162,7 +160,7 @@ rules = [
     ),
 
     # Vehicle-related rules
-    # Rule 29-37
+    # Rule 11-16
     ctrl.Rule(brake_risk["high"], risk["high"]),
 
     ctrl.Rule(
@@ -197,7 +195,7 @@ rules = [
     ),
 
     # Mixed moderate-risk combinations
-    # Rule 38-42
+    # Rule 17-18
     ctrl.Rule(
         experience_risk["medium"]
         & weather_risk["medium"]
