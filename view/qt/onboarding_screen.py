@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
     QPushButton,
 )
 from PyQt6.QtCore import pyqtSignal, Qt
-
 from view.qt.ui_parts import CardFrame
 
 
@@ -152,7 +151,7 @@ class OnboardingScreen(QWidget):
         button_row = QHBoxLayout()
         logout_btn = self._dark_button("Logout")
         logout_btn.setMinimumWidth(115)
-        logout_btn.clicked.connect(self.logout_requested.emit)
+        logout_btn.clicked.connect(self._confirm_logout)
     
         self.start_button = self._green_button("START THE EVALUATION")
         
@@ -233,7 +232,19 @@ class OnboardingScreen(QWidget):
             return
 
         self.proceed_requested.emit()
+    
+    def _confirm_logout(self):
+        reply = QMessageBox.question(
+            self,
+            "Confirm Logout",
+            "Are you sure you want to log out?\n\nAny unsaved progress will be lost.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
 
+        if reply == QMessageBox.StandardButton.Yes:
+            self.logout_requested.emit()
+            
     def reset(self):
         for box in self.awareness_checks:
             box.setChecked(False)

@@ -1,5 +1,5 @@
 import qtawesome as qta
-from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QMessageBox
 from PyQt6.QtCore import pyqtSignal, Qt
 
 from view.qt.ui_parts import CardFrame
@@ -99,7 +99,7 @@ class VehicleScreen(QWidget):
 
         logout_btn = self._dark_button("Logout")
         logout_btn.setMinimumWidth(115)
-        logout_btn.clicked.connect(self.logout_requested.emit)
+        logout_btn.clicked.connect(self._confirm_logout)
 
         back_btn = self._dark_button("Back")
         back_btn.setMinimumWidth(115)
@@ -235,6 +235,18 @@ class VehicleScreen(QWidget):
             QPushButton:hover { background: #4A8B07; }
         """)
         return btn
+
+    def _confirm_logout(self):
+        reply = QMessageBox.question(
+            self,
+            "Confirm Logout",
+            "Are you sure you want to log out?\n\nAny unsaved progress will be lost.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self.logout_requested.emit()
 
     def reset(self):
         self.vehicle_type.setCurrentIndex(0)
