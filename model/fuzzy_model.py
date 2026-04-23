@@ -34,7 +34,7 @@ trip_duration_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "trip_duration_
 
 weather_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "weather_risk")
 road_issue_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "road_issue_risk")
-# road_type_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "road_type_risk")
+road_type_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "road_type_risk")
 traffic_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "traffic_risk")
 road_condition_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "road_condition_risk")
 intersection_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "intersection_risk")
@@ -68,7 +68,7 @@ for variable in (
     trip_duration_risk,
     weather_risk,
     road_issue_risk,
-    # road_type_risk,
+    road_type_risk,
     traffic_risk,
     road_condition_risk,
     intersection_risk,
@@ -379,7 +379,7 @@ def evaluate_fuzzy(inputs: dict):
 
     sim.input["weather_risk"] = safe_get(weather_map, inputs["weather_condition"])
     sim.input["road_issue_risk"] = safe_get(visible_road_issues_map, inputs["visible_road_issues"])
-    # sim.input["road_type_risk"] = safe_get(road_type_map, inputs["road_type"])
+    sim.input["road_type_risk"] = safe_get(road_type_map, inputs["road_type"])
     sim.input["traffic_risk"] = safe_get(traffic_level_map, inputs["traffic_level"])
     sim.input["road_condition_risk"] = safe_get(road_condition_map, inputs["road_condition"])
     sim.input["intersection_risk"] = safe_get(intersection_map, inputs["intersections_busy_crossings"])
@@ -423,7 +423,7 @@ def sample_inputs(n=1000):
             "trip_duration_risk": rng.uniform(0, 1),
             "weather_risk": rng.uniform(0, 1),
             "road_issue_risk": rng.uniform(0, 1),
-            # "road_type_risk": rng.uniform(0, 1),
+            "road_type_risk": rng.uniform(0, 1),
             "traffic_risk": rng.uniform(0, 1),
             "road_condition_risk": rng.uniform(0, 1),
             "intersection_risk": rng.uniform(0, 1),
