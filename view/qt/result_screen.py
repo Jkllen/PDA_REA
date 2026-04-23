@@ -82,6 +82,7 @@ class ResultScreen(QWidget):
     encrypt_requested = pyqtSignal()
     decrypt_requested = pyqtSignal()
     advisory_requested = pyqtSignal()
+    new_evaluation_requested = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -487,7 +488,7 @@ class ResultScreen(QWidget):
                 );
             }
         """)
-        self.new_eval_button.clicked.connect(self.back_requested.emit)
+        self.new_eval_button.clicked.connect(self.new_evaluation_requested.emit)
 
         right_buttons.addWidget(self.advisory_button)
         right_buttons.addWidget(self.new_eval_button)

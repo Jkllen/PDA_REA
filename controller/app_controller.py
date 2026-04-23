@@ -1,3 +1,4 @@
+from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QMessageBox, QFileDialog, QInputDialog
 from view.qt.main_window import MainWindow
 from model.auth_model import login, signup
@@ -33,9 +34,12 @@ class AppController:
         self.window.result_screen.encrypt_requested.connect(self.handle_encrypt)
         self.window.result_screen.decrypt_requested.connect(self.handle_decrypt)
         self.window.result_screen.advisory_requested.connect(self.show_advisory)
+        
 
         self.window.advisory_screen.back_to_result_requested.connect(self.show_result_screen)
-        self.window.advisory_screen.new_evaluation_requested.connect(self.show_risk_input)
+        
+        self.window.advisory_screen.new_evaluation_requested.connect(self.start_new_evaluation)
+        self.window.result_screen.new_evaluation_requested.connect(self.start_new_evaluation)
 
     def show(self):
         self.window.show()
@@ -141,6 +145,15 @@ class AppController:
         except Exception as error:
             self._show_message("Evaluation Error", f"Failed to evaluate risk.\n\n{error}")
 
+    def start_new_evaluation(self):
+        print("APP CONTROLLER: start_new_evaluation called")
+        if hasattr(self.window.result_screen, "clear_result"):
+            self.window.result_screen.clear_result()
+
+        self.window.show_risk_input()
+
+        QTimer.singleShot(0, self.window.risk_input_screen.start_new_evaluation)
+        
     def handle_encrypt(self):
         if not self.current_report:
             self._show_message("No Report", "Please generate a report first.")

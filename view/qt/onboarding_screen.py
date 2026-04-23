@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
     QPushButton,
 )
 from PyQt6.QtCore import pyqtSignal, Qt
-
 from view.qt.ui_parts import CardFrame
 
 
@@ -152,7 +151,7 @@ class OnboardingScreen(QWidget):
         button_row = QHBoxLayout()
         logout_btn = self._dark_button("Logout")
         logout_btn.setMinimumWidth(115)
-        logout_btn.clicked.connect(self.logout_requested.emit)
+        logout_btn.clicked.connect(self._confirm_logout)
     
         self.start_button = self._green_button("START THE EVALUATION")
         
@@ -206,15 +205,46 @@ class OnboardingScreen(QWidget):
         return btn
 
     def _handle_start(self):
-        if not all(box.isChecked() for box in self.awareness_checks):
+        items = [
+            ("your physical and mental condition", self.awareness_checks[0]),
+            ("your driving behavior and habits", self.awareness_checks[1]),
+            ("your vehicle condition", self.awareness_checks[2]),
+            ("your route and environment", self.awareness_checks[3]),
+            ("your legal responsibility as a driver", self.awareness_checks[4]),
+        ]
+
+        unchecked = [label for label, box in items if not box.isChecked()]
+
+        if unchecked:
+            if len(unchecked) == 1:
+                missing_text = unchecked[0]
+            elif len(unchecked) == 2:
+                missing_text = f"{unchecked[0]} and {unchecked[1]}"
+            else:
+                missing_text = ", ".join(unchecked[:-1]) + f", and {unchecked[-1]}"
+
             QMessageBox.warning(
                 self,
                 "Confirmation Required",
-                "Please confirm that you are aware of your current state, driving behavior, vehicle condition, and the route you will be taking.\nResponsible driving behavior is expected under Republic Act No. 4136",
+                f"Please confirm that you are aware of {missing_text}. "
+                "Responsible driving behavior is expected under Republic Act No. 4136.",
             )
             return
-        self.proceed_requested.emit()
 
+        self.proceed_requested.emit()
+    
+    def _confirm_logout(self):
+        reply = QMessageBox.question(
+            self,
+            "Confirm Logout",
+            "Are you sure you want to log out?\n\nAny unsaved progress will be lost.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self.logout_requested.emit()
+            
     def reset(self):
         for box in self.awareness_checks:
             box.setChecked(False)

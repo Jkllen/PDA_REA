@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QHBoxLayout,
     QComboBox, QPushButton, QLineEdit
 )
+from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtCore import pyqtSignal, Qt
 
 from view.qt.ui_parts import CardFrame
@@ -101,7 +102,7 @@ class DriverTripScreen(QWidget):
 
         logout_btn = self._dark_button("Logout")
         logout_btn.setMinimumWidth(115)
-        logout_btn.clicked.connect(self.logout_requested.emit)
+        logout_btn.clicked.connect(self._confirm_logout)
 
         next_btn = self._green_button("Next")
         next_btn.setMinimumWidth(115)
@@ -268,6 +269,18 @@ class DriverTripScreen(QWidget):
         """)
         return btn
 
+    def _confirm_logout(self):
+        reply = QMessageBox.question(
+            self,
+            "Confirm Logout",
+            "Are you sure you want to log out?\n\nAny unsaved progress will be lost.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self.logout_requested.emit()
+            
     def reset(self):
         self.driver_age.clear()
         self.driver_alcohol.setCurrentIndex(0)
