@@ -90,7 +90,7 @@ class OnboardingScreen(QWidget):
                 "You understand your typical driving behavior, including speed, focus, and possible distractions.",
             ),
             (
-                "Your Vehicle Condition",
+                "Your Vehicle's Condition",
                 "You are aware of your vehicle's condition, including brakes, lights, tires, and overall roadworthiness.",
             ),
             (
@@ -227,7 +227,7 @@ class OnboardingScreen(QWidget):
                 self,
                 "Confirmation Required",
                 f"Please confirm that you are aware of {missing_text}. "
-                "Responsible driving behavior is expected under Republic Act No. 4136.",
+                "\nResponsible driving behavior is expected under Republic Act No. 4136.",
             )
             return
 
