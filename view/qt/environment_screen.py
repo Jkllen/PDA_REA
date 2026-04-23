@@ -48,6 +48,8 @@ class EnvironmentScreen(QWidget):
             ],
             placeholder="Select current weather condition",
         )
+        self.weather.currentIndexChanged.connect(self._update_road_condition_options)
+        
         self.road_type = self._combo_field(
             left,
             "What type of road will you mostly be driving on?",
@@ -137,6 +139,8 @@ class EnvironmentScreen(QWidget):
         button_row.addWidget(next_btn)
 
         page_layout.addLayout(button_row)
+        
+        self._update_road_condition_options()
 
     def _wide_section_card(self, title: str, subtitle: str) -> CardFrame:
         card = CardFrame()
@@ -234,6 +238,32 @@ class EnvironmentScreen(QWidget):
         layout.addWidget(combo)
         parent_layout.addWidget(shell)
         return combo
+
+    def _update_road_condition_options(self):
+        weather = self.weather.currentText().strip().lower()
+        dry_text = "Dry and clear"
+
+        model = self.road_condition.model()
+
+        rainy_or_low_visibility = {
+            "light rain",
+            "heavy rain",
+            "storm / typhoon",
+            "fog / low visibility",
+        }
+
+        for i in range(self.road_condition.count()):
+            text = self.road_condition.itemText(i)
+
+            if text.lower() == dry_text.lower():
+                item = model.item(i)
+                if item is not None:
+                    should_disable = weather in rainy_or_low_visibility
+                    item.setEnabled(not should_disable)
+
+                    # if user already selected dry and clear, force reset
+                    if should_disable and self.road_condition.currentText().lower() == dry_text.lower():
+                        self.road_condition.setCurrentIndex(0)
 
     def _dark_button(self, text: str) -> QPushButton:
         btn = QPushButton(text)
