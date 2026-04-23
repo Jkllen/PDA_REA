@@ -34,7 +34,7 @@ trip_duration_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "trip_duration_
 
 weather_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "weather_risk")
 road_issue_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "road_issue_risk")
-road_type_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "road_type_risk")
+# road_type_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "road_type_risk")
 traffic_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "traffic_risk")
 road_condition_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "road_condition_risk")
 intersection_risk = ctrl.Antecedent(np.arange(0.0, 1.01, 0.01), "intersection_risk")
@@ -53,8 +53,8 @@ risk = ctrl.Consequent(np.arange(0.0, 1.01, 0.01), "risk")
 # =========================================================
 def add_low_medium_high(variable):
     variable["low"] = fuzz.trapmf(variable.universe, [0.0, 0.0, 0.20, 0.40])
-    variable["medium"] = fuzz.trimf(variable.universe, [0.30, 0.50, 0.70])
-    variable["high"] = fuzz.trapmf(variable.universe, [0.60, 0.80, 1.0, 1.0])
+    variable["medium"] = fuzz.trimf(variable.universe, [0.30, 0.50, 0.80])
+    variable["high"] = fuzz.trapmf(variable.universe, [0.75, 0.90, 1.0, 1.0])
 
 
 driver_age["young"] = fuzz.trapmf(driver_age.universe, [18, 18, 25, 35])
@@ -68,7 +68,7 @@ for variable in (
     trip_duration_risk,
     weather_risk,
     road_issue_risk,
-    road_type_risk,
+    # road_type_risk,
     traffic_risk,
     road_condition_risk,
     intersection_risk,
@@ -90,7 +90,7 @@ risk["high"] = fuzz.trapmf(risk.universe, [0.62, 0.78, 1.0, 1.0])
 # =========================================================
 rules = [
     # Safer baseline
-    # Rule 1
+    # Rule 0 
     ctrl.Rule(
         alcohol_risk["low"]
         & experience_risk["low"]
@@ -101,70 +101,59 @@ rules = [
         & mechanical_risk["low"]
         & maintenance_risk["low"],
         risk["low"],
-    ), #rule1
+    ), # DEAD RULE
 
     # Alcohol-related rules
-    # Rule 2-5
-    ctrl.Rule(alcohol_risk["high"], risk["high"]), #rule2
-    ctrl.Rule(alcohol_risk["medium"] & time_risk["high"], risk["high"]),
-    ctrl.Rule(alcohol_risk["medium"] & trip_duration_risk["high"], risk["high"]),
+    # Rule 1-4
+    # Alcohol dominates everything
+    ctrl.Rule(alcohol_risk["high"], risk["high"]),
+    ctrl.Rule(alcohol_risk["medium"] & (time_risk["high"] | trip_duration_risk["high"]), risk["high"]),
     ctrl.Rule(alcohol_risk["medium"], risk["medium"]),
 
     # Experience and age
-    # Rule 6-11
-    ctrl.Rule(experience_risk["high"] & time_risk["high"], risk["high"]),
-    ctrl.Rule(experience_risk["high"] & traffic_risk["high"], risk["high"]),
-    ctrl.Rule(experience_risk["high"] & road_type_risk["high"], risk["high"]),
+    # Rule 5-10
+    ctrl.Rule(experience_risk["high"] & (traffic_risk["high"] | time_risk["high"]), risk["high"]),
     ctrl.Rule(driver_age["young"] & experience_risk["high"], risk["high"]),
-    ctrl.Rule(driver_age["senior"] & weather_risk["high"], risk["medium"]),
-    ctrl.Rule(driver_age["senior"] & traffic_risk["high"] & intersection_risk["high"], risk["high"]),
+    ctrl.Rule(driver_age["senior"] & (weather_risk["high"] | traffic_risk["high"]), risk["high"]),
 
     # Time and trip exposure
-    # Rule 12-15
+    # Rule 11-14
     ctrl.Rule(time_risk["high"] & trip_duration_risk["high"], risk["high"]),
-    ctrl.Rule(time_risk["medium"] & trip_duration_risk["high"], risk["medium"]),
     ctrl.Rule(trip_duration_risk["high"] & traffic_risk["high"], risk["high"]),
-    ctrl.Rule(trip_duration_risk["high"] & experience_risk["high"], risk["high"]),
+    ctrl.Rule(trip_duration_risk["high"] & experience_risk["medium"], risk["medium"]),
 
     # Weather / environment
-    # Rule 16-29
-    ctrl.Rule(weather_risk["high"] & road_condition_risk["high"], risk["high"]),
-    ctrl.Rule(weather_risk["high"] & road_issue_risk["high"], risk["high"]),
-    ctrl.Rule(weather_risk["high"] & traffic_risk["high"], risk["high"]),
-    ctrl.Rule(weather_risk["medium"] & road_condition_risk["medium"], risk["medium"]),
-    ctrl.Rule(road_issue_risk["high"] & road_condition_risk["high"], risk["high"]),
-    ctrl.Rule(road_issue_risk["high"] & traffic_risk["high"], risk["high"]),
-    ctrl.Rule(road_issue_risk["medium"] & road_condition_risk["medium"], risk["medium"]),
-    ctrl.Rule(road_type_risk["high"] & weather_risk["high"], risk["high"]),
-    ctrl.Rule(road_type_risk["high"] & traffic_risk["medium"], risk["medium"]),
+    # Rule 15-28
+    ctrl.Rule(weather_risk["high"] & (road_condition_risk["high"] | road_issue_risk["high"]), risk["high"]),
     ctrl.Rule(traffic_risk["high"] & intersection_risk["high"], risk["high"]),
-    ctrl.Rule(traffic_risk["medium"] & intersection_risk["medium"], risk["medium"]),
-    ctrl.Rule(road_condition_risk["high"], risk["high"]),
-    ctrl.Rule(road_condition_risk["medium"] & traffic_risk["medium"], risk["medium"]),
-    ctrl.Rule(intersection_risk["high"] & time_risk["high"], risk["high"]),
-
-    # Vehicle-related rules
-    # Rule 30-38
-    ctrl.Rule(brake_risk["high"], risk["high"]),
-    ctrl.Rule(mechanical_risk["high"], risk["high"]),
-    ctrl.Rule(maintenance_risk["high"] & brake_risk["medium"], risk["high"]),
-    ctrl.Rule(maintenance_risk["high"] & mechanical_risk["medium"], risk["high"]),
-    ctrl.Rule(vehicle_age_risk["high"] & maintenance_risk["high"], risk["high"]),
-    ctrl.Rule(vehicle_age_risk["high"] & brake_risk["medium"], risk["medium"]),
-    ctrl.Rule(vehicle_type_risk["high"] & weather_risk["high"], risk["high"]),
-    ctrl.Rule(vehicle_type_risk["high"] & road_condition_risk["high"], risk["high"]),
-    ctrl.Rule(vehicle_type_risk["medium"] & traffic_risk["high"], risk["medium"]),
-
-    # Mixed moderate-risk combinations
-    # Rule 39-43
-    ctrl.Rule(brake_risk["medium"] & weather_risk["medium"], risk["medium"]),
-    ctrl.Rule(mechanical_risk["medium"] & traffic_risk["medium"], risk["medium"]),
-    ctrl.Rule(maintenance_risk["medium"] & vehicle_age_risk["medium"], risk["medium"]),
-    ctrl.Rule(experience_risk["medium"] & trip_duration_risk["medium"], risk["medium"]),
+    ctrl.Rule(road_condition_risk["high"] & traffic_risk["high"], risk["high"]),
     ctrl.Rule(weather_risk["medium"] & traffic_risk["medium"], risk["medium"]),
 
+    # Vehicle-related rules
+    # Rule 29-37
+    ctrl.Rule(brake_risk["high"], risk["high"]),
+    ctrl.Rule(mechanical_risk["high"] & maintenance_risk["high"], risk["high"]),
+    ctrl.Rule(vehicle_age_risk["high"] & maintenance_risk["high"], risk["high"]),
+    ctrl.Rule(vehicle_type_risk["high"] & (weather_risk["high"] | road_condition_risk["high"]), risk["high"]),
+
+    # Mixed moderate-risk combinations
+    # Rule 38-42
+    ctrl.Rule(
+        experience_risk["medium"]
+        & weather_risk["medium"]
+        & traffic_risk["medium"],
+        risk["medium"],
+    ),
+
+    ctrl.Rule(
+        brake_risk["medium"]
+        & road_condition_risk["medium"]
+        & weather_risk["medium"],
+        risk["medium"],
+    ),
+
     # Strong low-risk combinations
-    # Rule44
+    # Rule43
     ctrl.Rule(
         weather_risk["low"]
         & road_condition_risk["low"]
@@ -176,7 +165,7 @@ rules = [
         & alcohol_risk["low"]
         & experience_risk["low"],
         risk["low"],
-    ),
+    ), # DEAD RULE
 ]
 
 system = ctrl.ControlSystem(rules)
@@ -390,7 +379,7 @@ def evaluate_fuzzy(inputs: dict):
 
     sim.input["weather_risk"] = safe_get(weather_map, inputs["weather_condition"])
     sim.input["road_issue_risk"] = safe_get(visible_road_issues_map, inputs["visible_road_issues"])
-    sim.input["road_type_risk"] = safe_get(road_type_map, inputs["road_type"])
+    # sim.input["road_type_risk"] = safe_get(road_type_map, inputs["road_type"])
     sim.input["traffic_risk"] = safe_get(traffic_level_map, inputs["traffic_level"])
     sim.input["road_condition_risk"] = safe_get(road_condition_map, inputs["road_condition"])
     sim.input["intersection_risk"] = safe_get(intersection_map, inputs["intersections_busy_crossings"])
@@ -434,7 +423,7 @@ def sample_inputs(n=1000):
             "trip_duration_risk": rng.uniform(0, 1),
             "weather_risk": rng.uniform(0, 1),
             "road_issue_risk": rng.uniform(0, 1),
-            "road_type_risk": rng.uniform(0, 1),
+            # "road_type_risk": rng.uniform(0, 1),
             "traffic_risk": rng.uniform(0, 1),
             "road_condition_risk": rng.uniform(0, 1),
             "intersection_risk": rng.uniform(0, 1),
@@ -550,13 +539,52 @@ def rule_coverage_report(avg_activation, fire_rate):
         elif a > 0.5:
             print(f"[Rule {i}] 🔥 Strong influence | activation={a:.3f}")
 
+def inspect_rules(input_dict, top_n=10):
+    sim = ctrl.ControlSystemSimulation(system)
+
+    for k, v in input_dict.items():
+        for k2, v2 in v.items():
+            sim.input[k2] = float(v2)
+
+    sim.compute()
+
+    activations = []
+
+    for i, rule in enumerate(system.rules):
+        strength = rule.aggregate_firing[sim]
+        activations.append((i, strength, str(rule)))
+
+    activations.sort(key=lambda x: -x[1])
+
+    with open('output.txt', 'a') as f:
+        for i, strength, rule_text in activations[:top_n]:
+            print(f"[{i}] strength={strength:.3f}", file=f)
+            print(rule_text, file=f)
+            print("-" * 50, file=f)
+
+def plot_memberships(variable):
+    plt.figure()
+
+    for label in variable.terms:
+        plt.plot(variable.universe, variable[label].mf, label=label)
+
+    plt.title(variable.label)
+    plt.legend()
+    plt.grid()
+    plt.show()
+
 samples = sample_inputs(1000)
 
 avg_activation, fire_rate = analyze_rule_activation(samples)
 
-plot_rule_stats(avg_activation, fire_rate)
+plot_memberships(alcohol_risk)
+plot_memberships(risk)
 
 rule_coverage_report(avg_activation, fire_rate)
 
 conflicts = detect_conflicts(samples[:200])
 print("Conflicts found:", len(conflicts))
+
+inspect_rules(dict(enumerate(samples)))
+
+plot_rule_stats(avg_activation, fire_rate)
