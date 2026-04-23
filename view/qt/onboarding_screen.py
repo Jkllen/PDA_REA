@@ -74,7 +74,8 @@ class OnboardingScreen(QWidget):
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
             """
         )
-        scroll.setFixedHeight(320)
+        scroll.setMinimumHeight(200)
+        scroll.setMaximumHeight(400)
 
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
