@@ -175,7 +175,7 @@ class ResultScreen(QWidget):
         client_row.addWidget(client_icon)
         client_row.addWidget(self.client_label)
 
-        self.score_label = QLabel("Evaluation Score: -")
+        self.score_label = QLabel("Severity Score: -")
         self.score_label.setStyleSheet("font-size: 18px; color: #111; font-weight: 600;")
 
         right_top.addLayout(client_row)
@@ -595,7 +595,7 @@ class ResultScreen(QWidget):
         )
 
         self.client_label.setText(f"Client ID: {client_id}")
-        self.score_label.setText(f"Evaluation Score: {score:.2f}")
+        self.score_label.setText(f"Severity Score: {score * 100:.2f} / 100")
 
         if risk_level == "Low Risk":
             summary = "Current conditions appear manageable for travel."
@@ -701,10 +701,10 @@ class ResultScreen(QWidget):
                     client_id = line.replace("Client ID:", "", 1).strip()
                     continue
 
-                if line.startswith("Evaluation Score:"):
-                    score_text = line.replace("Evaluation Score:", "", 1).strip()
+                if line.startswith("Severity Score:"):
+                    score_text = line.replace("Severity Score:", "", 1).strip()
                     try:
-                        score = float(score_text)
+                        score = float(score_text) * 100
                     except ValueError:
                         score = 0.0
                     continue
@@ -803,7 +803,7 @@ class ResultScreen(QWidget):
         self.report_text = ""
 
         self.client_label.setText("Client ID: -")
-        self.score_label.setText("Evaluation Score: -")
+        self.score_label.setText("Severity Score: -")
         self.risk_value.setText("-")
         self.risk_value.setStyleSheet("font-size: 24px; font-weight: 500; color: #111;")
         self.traffic_light.set_level("-")
