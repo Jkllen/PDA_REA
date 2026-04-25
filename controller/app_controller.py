@@ -4,7 +4,7 @@ from view.qt.main_window import MainWindow
 from model.auth_model import login, signup
 from model.fuzzy_model import evaluate_fuzzy
 from model.crypto_model import encrypt_report, decrypt_report
-
+from reportGenerator.genReport import genReport
 
 class AppController:
     def __init__(self):
@@ -31,8 +31,7 @@ class AppController:
         self.window.risk_input_screen.evaluate_requested.connect(self.handle_evaluate)
 
         self.window.result_screen.back_requested.connect(self.show_risk_input)
-        self.window.result_screen.encrypt_requested.connect(self.handle_encrypt)
-        self.window.result_screen.decrypt_requested.connect(self.handle_decrypt)
+        self.window.result_screen.download_requested.connect(self.handle_download_report)
         self.window.result_screen.advisory_requested.connect(self.show_advisory)
         
 
@@ -178,47 +177,89 @@ class AppController:
         except Exception as error:
             self._show_message("Encryption Error", f"Failed to encrypt report.\n\n{error}")
 
-    def handle_decrypt(self):
-        file_path, _ = QFileDialog.getOpenFileName(
+    def handle_download_report(self):
+        if not getattr(self.window.result_screen, "current_inputs", None):
+            QMessageBox.warning(
+                self.window,
+                "No Report Available",
+                "Please run an evaluation before downloading a report."
+            )
+            return
+
+        filename, _ = QFileDialog.getSaveFileName(
             self.window,
-            "Open Encrypted Report",
-            "",
-            "Encrypted Files (*.enc)"
+            "Download Evaluation Report",
+            "evaluation_report.pdf",
+            "PDF Files (*.pdf)"
         )
-        if not file_path:
+
+        if not filename:
             return
 
-        key, ok = QInputDialog.getText(self.window, "Decrypt Report", "Enter decryption key:")
-        if not ok or not key.strip():
-            return
+        if not filename.lower().endswith(".pdf"):
+            filename += ".pdf"
 
-        try:
-            decrypted = decrypt_report(key.strip(), file_path)
-            if decrypted is None:
-                self._show_message("Decryption Failed", "Invalid key or corrupted file.")
-                return
+        risk_level = self.window.result_screen.current_risk_level
+        client_id = self.window.result_screen.current_client_id
+        inputs = self.window.result_screen.current_inputs
+        reasons = self.window.result_screen.current_reasons
+        recommendations = self.window.result_screen.current_recommendations
 
-            self.window.result_screen.set_decrypted_report(decrypted)
+        score_text = self.window.result_screen.score_label.text().replace("Evaluation Score:", "").strip()
 
-            # sync controller state from decrypted result so advisory also updates
-            self.last_inputs = self.window.result_screen.current_inputs
-            self.last_risk_level = self.window.result_screen.current_risk_level
-            self.last_reasons = self.window.result_screen.current_reasons
-            self.last_recommendations = self.window.result_screen.current_recommendations
-            self.last_client_id = self.window.result_screen.current_client_id
+        if risk_level == "Low Risk":
+            eval_summary = "Current conditions appear manageable for travel."
+            reco_action = "Proceed with normal caution."
+        elif risk_level == "Medium Risk":
+            eval_summary = "There are notable risk factors before travel."
+            reco_action = "Proceed only with extra caution."
+        else:
+            eval_summary = "Current conditions present serious pre-driving risk."
+            reco_action = "Delay or avoid travel until conditions improve."
 
-            score_text = self.window.result_screen.score_label.text().replace("Evaluation Score:", "").strip()
-            try:
-                self.last_score = float(score_text)
-            except ValueError:
-                self.last_score = 0.0
+        risk_distribution = [
+            self.window.result_screen.low_distribution.text().replace("Low Risk:", "").strip(),
+            self.window.result_screen.medium_distribution.text().replace("Medium Risk:", "").strip(),
+            self.window.result_screen.high_distribution.text().replace("High Risk:", "").strip(),
+        ]
 
-            self.window.show_result()
+        input_summary = [
+            str(inputs.get("driver_age", "-")),
+            str(inputs.get("alcohol_consumption", "-")),
+            str(inputs.get("driving_experience", "-")),
+            str(inputs.get("time_of_day", "-")),
+            str(inputs.get("expected_trip_duration", "-")),
+            str(inputs.get("vehicle_type", "-")),
+            str(inputs.get("vehicle_age", "-")),
+            str(inputs.get("recent_mechanical_issues", "-")),
+            str(inputs.get("brake_condition", "-")),
+            str(inputs.get("last_vehicle_maintenance", "-")),
+            str(inputs.get("weather_condition", "-")),
+            str(inputs.get("visible_road_issues", "-")),
+            str(inputs.get("road_type", "-")),
+            str(inputs.get("traffic_level", "-")),
+            str(inputs.get("road_condition", "-")),
+            str(inputs.get("intersections_busy_crossings", "-")),
+        ]
 
-        except Exception as error:
-            self._show_message("Decryption Error", f"Failed to decrypt report.\n\n{error}")
+        report = genReport(filename)
+        report.setRiskLevel(risk_level)
+        report.setClientId(client_id)
+        report.setEvaluationScore(score_text)
+        report.setInputSummary(input_summary)
+        report.setEvalSummary(eval_summary)
+        report.setRecommendedAction(reco_action)
+        report.setRiskDistribution(risk_distribution)
+        report.setReasonList(reasons)
+        report.setPriorityActions(recommendations)
+        report.generateReport()
 
-        
+        QMessageBox.information(
+            self.window,
+            "Report Downloaded",
+            "The evaluation report was successfully saved as a PDF."
+        )
+
     def show_advisory(self):
         if not self.current_client and not self.last_client_id:
             self._show_message("Session Error", "Please evaluate or decrypt a report first.")

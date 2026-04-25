@@ -79,8 +79,7 @@ class TrafficLightWidget(QWidget):
 
 class ResultScreen(QWidget):
     back_requested = pyqtSignal()
-    encrypt_requested = pyqtSignal()
-    decrypt_requested = pyqtSignal()
+    download_requested = pyqtSignal()
     advisory_requested = pyqtSignal()
     new_evaluation_requested = pyqtSignal()
 
@@ -401,14 +400,12 @@ class ResultScreen(QWidget):
         left_buttons.setSpacing(18)
 
         self.back_button = QPushButton(qta.icon("fa5s.arrow-left", color="white"), " Back")
-        self.encrypt_button = QPushButton(qta.icon("fa5s.lock", color="white"), " Download")
-        self.decrypt_button = QPushButton(qta.icon("fa5s.unlock", color="white"), " Decrypt")
+        self.download_button = QPushButton(qta.icon("fa5s.download", color="white"), " Download")
 
         self.back_button.clicked.connect(self.back_requested.emit)
-        self.encrypt_button.clicked.connect(self.encrypt_requested.emit)
-        self.decrypt_button.clicked.connect(self.decrypt_requested.emit)
+        self.download_button.clicked.connect(self.download_requested.emit)
 
-        for btn in (self.back_button, self.encrypt_button, self.decrypt_button):
+        for btn in (self.back_button, self.download_button):
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setMinimumHeight(54)
             btn.setMinimumWidth(130)
@@ -648,35 +645,6 @@ class ResultScreen(QWidget):
         self.reasons_box.addStretch()
         self.traffic_light.set_level(risk_level)
 
-    def set_decrypted_report(self, report: str):
-        self.report_text = report
-
-        parsed = self._parse_report_text(report)
-        if not parsed:
-            return
-
-        risk_level = parsed.get("risk_level", "-")
-        score = parsed.get("score", 0.0)
-        client_id = parsed.get("client_id", "-")
-        inputs = parsed.get("inputs", {})
-        risk_distribution = parsed.get(
-            "risk_distribution",
-            {"low": 0.0, "medium": 0.0, "high": 0.0},
-        )
-        reasons = parsed.get("reasons", [])
-        recommendations = parsed.get("recommendations", [])
-
-        self.set_result(
-            report=report,
-            risk_level=risk_level,
-            score=score,
-            client_id=client_id,
-            inputs=inputs,
-            risk_distribution=risk_distribution,
-            reasons=reasons,
-            recommendations=recommendations,
-        )
-    
     def _parse_report_text(self, report: str) -> dict | None:
         try:
             lines = [line.rstrip() for line in report.splitlines()]
