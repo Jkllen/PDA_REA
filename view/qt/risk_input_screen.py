@@ -94,18 +94,10 @@ class RiskInputScreen(QWidget):
         QMessageBox.warning(self, "Incomplete Input", message)
 
     def _go_to_vehicle_if_valid(self):
-        age_text = self.driver_trip_screen.driver_age.text().strip()
+        birthdate = self.driver_trip_screen.birthdate_input.date()
+        driver_age = self.driver_trip_screen.calculate_age(birthdate)
 
-        if not age_text:
-            self._warn("Please enter your age before proceeding.")
-            return
-
-        if not age_text.isdigit():
-            self._warn("Please enter a valid numeric age.")
-            return
-
-        age = int(age_text)
-        if age < 18 or age > 70:
+        if driver_age < 18 or driver_age > 70:
             self._warn("Driver age must be between 18 and 70.")
             return
 
@@ -152,10 +144,11 @@ class RiskInputScreen(QWidget):
         self.show_environment()
 
     def _emit_data(self):
-        age_text = self.driver_trip_screen.driver_age.text().strip()
+        birthdate = self.driver_trip_screen.birthdate_input.date()
+        driver_age = self.driver_trip_screen.calculate_age(birthdate)
 
-        if not age_text or not age_text.isdigit():
-            self._warn("Please enter a valid driver age before running the assessment.")
+        if driver_age < 18 or driver_age > 70:
+            self._warn("Driver age must be between 18 and 70 before running the assessment.")
             return
 
         # vehicle validation
@@ -205,7 +198,7 @@ class RiskInputScreen(QWidget):
             return
 
         payload = {
-            "driver_age": int(age_text),
+            "driver_age": driver_age,
             "alcohol_consumption": self.driver_trip_screen.driver_alcohol.currentText().strip().lower(),
             "driving_experience": self.driver_trip_screen.driver_experience.currentText().strip().lower(),
             "time_of_day": self.driver_trip_screen.time_of_day.currentText().strip().lower(),

@@ -1115,7 +1115,7 @@ class AdvisoryScreen(QWidget):
         self.current_recommendations = recommendations or []
 
         self.client_label.setText(f"Client ID: {client_id}")
-        self.score_label.setText(f"Severity Score: {score * 100:.0f}%")
+        self.score_label.setText(f"Severity Score: {score * 100:.2f}%")
         self.risk_value.setText(risk_level)
         self.risk_value.setStyleSheet(
             f"font-size: 19px; font-weight: 800; color: {self._risk_color(risk_level)};"
