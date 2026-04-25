@@ -2,10 +2,10 @@ import qtawesome as qta
 
 from PyQt6.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QHBoxLayout,
-    QComboBox, QPushButton, QLineEdit
+    QComboBox, QPushButton, QLineEdit, QDateEdit
 )
 from PyQt6.QtWidgets import QMessageBox
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal, Qt, QDate
 
 from view.qt.ui_parts import CardFrame
 
@@ -29,11 +29,10 @@ class DriverTripScreen(QWidget):
         driver_card = self._section_card("DRIVER CONDITION", "fa6s.person-rays", "Before you start driving, check yourself first.")
         driver_layout = driver_card.layout()
 
-        self.driver_age = self._line_field(
+        self.birthdate_input = self._date_field(
             driver_layout,
-            "What is your age (in years)?",
-            "e.g. 35",
-        )
+            "What is your birth date?",
+            )
 
         self.driver_alcohol = self._combo_field(
             driver_layout,
@@ -233,6 +232,48 @@ class DriverTripScreen(QWidget):
         parent_layout.addWidget(shell)
         return line
 
+    def _date_field(self, parent_layout, label_text: str) -> QDateEdit:
+        shell, layout = self._field_shell(label_text)
+
+        date_edit = QDateEdit()
+        date_edit.setCalendarPopup(True)
+        date_edit.setDisplayFormat("MMMM d, yyyy")
+
+        # default: 18 years old
+        date_edit.setDate(QDate.currentDate().addYears(-18))
+
+        date_edit.setMinimumHeight(50)
+
+        date_edit.setStyleSheet("""
+            QDateEdit {
+                background: #F3F3F3;
+                border: 1px solid #111;
+                border-radius: 24px;
+                padding: 0 18px;
+                font-size: 15px;
+                color: #333;
+            }
+
+            QDateEdit::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 32px;
+                border: none;
+            }
+
+            QDateEdit::down-arrow {
+                image: url(assets/icons/arrow-down.png);
+                width: 18px;
+                height: 18px;
+                padding-right: 10px;
+            }
+        """)
+
+        layout.addWidget(date_edit)
+        parent_layout.addWidget(shell)
+
+        return date_edit
+
     def _dark_button(self, text: str) -> QPushButton:
         btn = QPushButton(text)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -292,8 +333,18 @@ class DriverTripScreen(QWidget):
             self.logout_requested.emit()
             
     def reset(self):
-        self.driver_age.clear()
+        self.birthdate_input.setDate(QDate.currentDate().addYears(-18))
         self.driver_alcohol.setCurrentIndex(0)
         self.driver_experience.setCurrentIndex(0)
         self.time_of_day.setCurrentIndex(0)
         self.trip_duration.setCurrentIndex(0)
+        
+    def calculate_age(self, birthdate: QDate):
+        today = QDate.currentDate()
+
+        age = today.year() - birthdate.year()
+
+        if (today.month(), today.day()) < (birthdate.month(), birthdate.day()):
+            age -= 1
+
+        return age
