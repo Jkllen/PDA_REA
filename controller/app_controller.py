@@ -119,6 +119,7 @@ class AppController:
             )
 
             self.current_report = report
+            self.last_client_id = self.current_client
             self.last_inputs = user_inputs
             self.last_score = score
             self.last_risk_level = risk_level
@@ -177,7 +178,23 @@ class AppController:
         inputs = self.window.result_screen.current_inputs
         reasons = self.window.result_screen.current_reasons
         recommendations = self.window.result_screen.current_recommendations
+        safety_advisory, assessment_explanation = self._build_advisory_pdf_content(risk_level)
 
+        specific_risk_factors = reasons if reasons else [
+            "No major risk factors were identified beyond safer baseline conditions."
+        ]
+
+        priority_actions = list(recommendations) if recommendations else [
+            "Review your driver condition, vehicle condition, and route before departure."
+        ]
+
+        joined = " ".join(priority_actions).lower()
+
+        if "alcohol" in joined:
+            priority_actions.insert(0, "Do not drive after consuming alcohol.")
+
+        if "brake" in joined or "mechanical" in joined:
+            priority_actions.insert(0, "Resolve safety-related vehicle issues before travel.")
         score_text = self.window.result_screen.score_label.text().replace("Evaluation Score:", "").strip()
 
         if risk_level == "Low Risk":
@@ -224,7 +241,10 @@ class AppController:
         report.setRecommendedAction(reco_action)
         report.setRiskDistribution(risk_distribution)
         report.setReasonList(reasons)
-        report.setPriorityActions(recommendations)
+        report.setPriorityActions(priority_actions[:5])
+        report.setSafetyAdvisory(safety_advisory)
+        report.setAssessmentExplanation(assessment_explanation)
+        report.setSpecificRiskFactors(specific_risk_factors)
         report.generateReport()
 
         QMessageBox.information(
@@ -233,6 +253,63 @@ class AppController:
             "The evaluation report was successfully saved as a PDF."
         )
 
+    def _build_advisory_pdf_content(self, risk_level: str):
+        if risk_level == "Low Risk":
+            safety_advisory = [
+                "Your current inputs indicate a lower level of pre-driving risk.",
+                "You may proceed, but safe driving discipline and vehicle checking are still necessary.",
+                "Continue reassessing your condition, your vehicle, and your surroundings before departure.",
+            ]
+
+            assessment_explanation = [
+                "Low Risk does not mean zero risk.",
+                "Unexpected traffic, weather changes, fatigue, or vehicle issues may still affect safety.",
+                "Stay alert and continue following all traffic rules and responsible driving practices.",
+            ]
+
+        elif risk_level == "Medium Risk":
+            safety_advisory = [
+                "Your current inputs indicate a moderate level of pre-driving risk.",
+                "Driving may still be possible, but only with extra caution and proper preparation.",
+                "You should correct controllable issues first before proceeding.",
+            ]
+
+            assessment_explanation = [
+                "Medium Risk means there are notable conditions that may reduce driving safety.",
+                "Examples may include fatigue, unsafe weather, route hazards, or vehicle concerns.",
+                "Reduce exposure by delaying travel, using a safer route, or correcting driver or vehicle issues first.",
+            ]
+
+        else:
+            safety_advisory = [
+                "Your current inputs indicate a high level of pre-driving risk.",
+                "Driving is not recommended unless major risk factors are addressed first.",
+                "Failure to correct these issues may increase the chance of accidents, injury, or legal consequences.",
+            ]
+
+            assessment_explanation = [
+                "High Risk means one or more serious conditions are affecting safe driving ability.",
+                "Examples may include alcohol use, unsafe weather, major mechanical issues, poor brake condition, or unfit driver condition.",
+                "The safest decision may be to delay the trip, refuse to drive, or use another transport option.",
+            ]
+
+        return safety_advisory, assessment_explanation
+
+
+    def show_advisory(self):
+        if not self.current_client and not self.last_client_id:
+            self._show_message("Session Error", "Please run an evaluation first.")
+            return
+
+        self.window.advisory_screen.set_advisory(
+            client_id=self.last_client_id or self.current_client,
+            risk_level=self.last_risk_level,
+            score=self.last_score,
+            inputs=self.last_inputs,
+            reasons=self.last_reasons,
+            recommendations=self.last_recommendations,
+        )
+        self.window.show_advisory()
 
     def show_result_screen(self):
         self.window.show_result()

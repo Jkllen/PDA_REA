@@ -157,7 +157,7 @@ class genReport:
         story.append(Spacer(1, 0.13 * inch))
 
         story.append(Paragraph(f"Client ID: {clientId}", body_style))
-        story.append(Paragraph(f"Severity Score: {severityScore} / 100", body_style))
+        story.append(Paragraph(f"Evaluation Score: {severityScore}", body_style))
 
         # --- INPUT SUMMARY ---
         story.append(Paragraph("INPUT SUMMARY", heading3_small))
@@ -610,52 +610,8 @@ class genReport:
         story.append(three_col_table)
         story.append(Spacer(1, 0.3 * inch))
 
-## used to test pdf generation, do not uncomment
-
-# Instantiate mo lang ung class after mo iimport, then pass mo ung output filename
-# INSTANTIATE THIS CLASS FIRST
-reportGenerator = genReport("report.pdf")
-
-# then input mo ung values ng eval result with these functions, in any order mo nalang icall basta mabigyan ng values
-# palitan mo lang ung nilagay kong hard coded values with the actual variables na naghohold ng values ng evaluation 
-reportGenerator.setRiskLevel("Low Risk")
-reportGenerator.setClientId("2026-001")
-reportGenerator.setSeverityScore("30.2")
-
-## Input mo lang dito list ng input variables, automatic mag lalagay ng label
-reportGenerator.setInputSummary(["34","none","less than 1yr","early morning","motorcycle", "none", "etc"]) 
-
-reportGenerator.setEvalSummary("current condi...")
-reportGenerator.setRecommendedAction("proceed with...")
-reportGenerator.setRiskDistribution(["87.90%","12.10%","0.00%"]) ## input mo dito list ng tatlong risk distribution percentage ng eval score 
-
-reportGenerator.setReasonList(["No drinking alcohol", "sheesh"]) ## input mo dito list ng reasons pano nakuha ung evaluation score 
-
-## ADVISORY
-
-## Input mo dito list ng priority actions from the result of the user's assessment
-reportGenerator.setPriorityActions([
-                "Correct the most serious risk factor first.",
-                "Do not drive if you are impaired, fatigued, or unfit.",
-                "Check vehicle roadworthiness before travel.",
-            ])
-
-## Input mo dito list ng risk status for safety advisory
-reportGenerator.setSafetyAdvisory([
-                "Your current inputs indicate a lower level of pre-driving risk.",
-                "You may proceed, but safe driving discipline and vehicle checking are still necessary.",
-                "Continue reassessing your condition, your vehicle, and your surroundings before departure.",
-            ])
-
-## Input mo dito list ng explanations ng assessment
-reportGenerator.setAssessmentExplanation([
-                "High Risk means one or more serious conditions are affecting safe driving ability.",
-                "Examples may include alcohol use, unsafe weather, major mechanical issues, poor brake condition, or unfit driver condition.",
-                "The safest decision may be to delay the trip, refuse to drive, or use another transport option.",
-            ])
-
-## Input mo dito list ng specific risk factors na naidentify
-reportGenerator.setSpecificRiskFactors(["Moderate driving experience still contributed", "Alcohol Consumption"])
-
-## CALL THIS FUNCTION LAST.
-reportGenerator.generateReport() ## keep mo lang to empty, basta macall mo ung function igegenerate na nya ung pdf,
+    def setEvaluationScore(self, evaluationScoreText: str):
+        global severityScore
+        severityScore = evaluationScoreText
+        
+        
