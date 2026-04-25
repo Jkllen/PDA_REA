@@ -64,7 +64,7 @@ class EnvironmentScreen(QWidget):
         )
         self.road_condition = self._combo_field(
             left,
-            "Check your route: what is the possible road condition?",
+            "Check your route: what is the most probable condition of the road you will be driving on?",
             [
                 "Dry and clear",
                 "Wet / Slippery",
