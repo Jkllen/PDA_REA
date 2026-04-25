@@ -3,7 +3,6 @@ from PyQt6.QtWidgets import QMessageBox, QFileDialog, QInputDialog
 from view.qt.main_window import MainWindow
 from model.auth_model import login, signup
 from model.fuzzy_model import evaluate_fuzzy
-from model.crypto_model import encrypt_report, decrypt_report
 from reportGenerator.genReport import genReport
 
 class AppController:
@@ -12,7 +11,6 @@ class AppController:
         self.current_client = None
         self.last_client_id = None
         self.current_report = None
-        self.current_encrypted_file = None
 
         self.last_inputs = {}
         self.last_score = 0.0
@@ -55,7 +53,6 @@ class AppController:
     def logout(self):
         self.current_client = None
         self.current_report = None
-        self.current_encrypted_file = None
         self.last_client_id = None
         self.last_inputs = {}
         self.last_score = 0.0
@@ -152,30 +149,6 @@ class AppController:
 
         QTimer.singleShot(0, self.window.risk_input_screen.start_new_evaluation)
         
-    def handle_encrypt(self):
-        if not self.current_report:
-            self._show_message("No Report", "Please generate a report first.")
-            return
-
-        key, ok = QInputDialog.getText(self.window, "Download Report", "Enter encryption key to download:")
-        if not ok or not key.strip():
-            return
-
-        file_path, _ = QFileDialog.getSaveFileName(
-            self.window,
-            "Save Encrypted Report",
-            "report.enc",
-            "Encrypted Files (*.enc)"
-        )
-        if not file_path:
-            return
-
-        try:
-            saved_file = encrypt_report(self.current_report, key.strip(), file_path)
-            self.current_encrypted_file = saved_file
-            self._show_message("Encryption Success", f"Encrypted report saved to:\n{saved_file}")
-        except Exception as error:
-            self._show_message("Encryption Error", f"Failed to encrypt report.\n\n{error}")
 
     def handle_download_report(self):
         if not getattr(self.window.result_screen, "current_inputs", None):
@@ -260,20 +233,6 @@ class AppController:
             "The evaluation report was successfully saved as a PDF."
         )
 
-    def show_advisory(self):
-        if not self.current_client and not self.last_client_id:
-            self._show_message("Session Error", "Please evaluate or decrypt a report first.")
-            return
-
-        self.window.advisory_screen.set_advisory(
-            client_id=self.last_client_id or self.current_client,
-            risk_level=self.last_risk_level,
-            score=self.last_score,
-            inputs=self.last_inputs,
-            reasons=self.last_reasons,
-            recommendations=self.last_recommendations,
-        )
-        self.window.show_advisory()
 
     def show_result_screen(self):
         self.window.show_result()
