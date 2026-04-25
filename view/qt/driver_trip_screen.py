@@ -253,6 +253,20 @@ class DriverTripScreen(QWidget):
                 font-size: 15px;
                 color: #333;
             }
+
+            QDateEdit::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 32px;
+                border: none;
+            }
+
+            QDateEdit::down-arrow {
+                image: url(assets/icons/arrow-down.png);
+                width: 18px;
+                height: 18px;
+                padding-right: 10px;
+            }
         """)
 
         layout.addWidget(date_edit)
